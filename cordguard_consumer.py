@@ -5,6 +5,7 @@ This module contains the logic for processing files from the in-app queue.
 
 Author: security@cordguard.org
 Version: 1.0.0
+! DEPRECATED
 """
 # from cordguard_file import CordGuardAnalysisFile
 # import logging
