@@ -1,27 +1,27 @@
 """
 CordGuard Application Server
 
-This module implements the main Flask application server for CordGuard, providing
+This module implements the main FastAPI application server for CordGuard, providing
 malware analysis capabilities through a REST API. It handles file uploads, analysis
 queuing, and worker coordination.
 
-The server uses AWS S3 for file storage and maintains a queue for
-processing analysis requests. It provides two main API routes:
+The server uses AWS S3 for secure file storage and SurrealDB for data persistence.
+It provides three main API routes:
 
 - /analysis/api/: Endpoints for submitting files and checking analysis status
-- /discovery/service/api/: Discovery service endpoints for worker registration and coordination
-- /mission/api/: Mission service endpoints for worker coordination
+- /discovery/service/api/: Discovery service endpoints for worker registration and coordination 
+- /mission/api/: Mission service endpoints for worker task coordination
 
 Key Components:
-    - Flask application server with REST API endpoints
+    - FastAPI application server with REST API endpoints
     - S3 integration for secure file storage
-    - Async queue for managing analysis workload
-    - Background workers for file processing
-    - Database integration for analysis results
+    - SurrealDB for data persistence and queuing
+    - Distributed VM workers for file analysis
+    - Ed25519 cryptographic signatures for worker authentication
 
 Environment Variables:
     AWS_ACCESS_KEY_ID: AWS access key for S3
-    AWS_SECRET_ACCESS_KEY: AWS secret key for S3
+    AWS_SECRET_ACCESS_KEY: AWS secret key for S3 
     AWS_ENDPOINT_URL_S3: S3 endpoint URL
     AWS_REGION: AWS region for S3
     BUCKET_NAME_S3: S3 bucket name for file storage
@@ -29,6 +29,8 @@ Environment Variables:
 Usage:
     Run directly:
         $ python app.py
+    
+    The server will start on port 5000
 
 Author: security@cordguard.org
 Version: 1.0.0
@@ -36,7 +38,7 @@ Version: 1.0.0
 import logging
 from fastapi import FastAPI
 from routes.analysis_api import analysis_api_endpoint_router
-from routes.ds_api import ds_api_endpoint_router
+from routes.discovery_service_api import ds_api_endpoint_router
 from routes.mission_api import mission_api_endpoint_router
 from cordguard_core import init_fastapi_app
 import uvicorn
