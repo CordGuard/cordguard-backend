@@ -42,6 +42,8 @@ from routes.discovery_service_api import ds_api_endpoint_router
 from routes.mission_api import mission_api_endpoint_router
 from cordguard_core import init_fastapi_app
 import uvicorn
+from cordguard_database import CordGuardDatabase
+from pydantic import BaseModel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -64,6 +66,20 @@ async def ping():
     """
     logger.info('Ping request received')
     return {"status": "pong"}
+
+
+class WaitlistEntry(BaseModel):
+    email: str
+    feature: str
+
+@app.post("/feature/join-waitlist")
+async def join_waitlist(request: WaitlistEntry):
+    """
+    Join the waitlist for a feature
+    """
+    db: CordGuardDatabase = await CordGuardDatabase.create()
+    record = await db.create_waitlist_entry(request.feature, request.email)
+    return {"success": record}
 
 if __name__ == '__main__':
     # Initialize application with routers

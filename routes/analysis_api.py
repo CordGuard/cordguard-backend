@@ -57,11 +57,14 @@ async def status(analysis_id: str):
     elif analysis_record.status == CordGuardAnalysisStatus.COMPLETED:
         # Get results from database and form it correctly
         results = await db.get_analysis_results_by_analysis_id(analysis_id)
+        # File data
+        file_record = await db.get_file_record_by_file_hash(analysis_record.file_hash)
         return {
             "message": "Analysis successful",
             "analysis_id": analysis_id,
             "status": analysis_record.status,
-            "results": results.get_dict()
+            "results": results.get_dict(),
+            "file_data": file_record.get_safe_dict()
         }
     else:
         raise HTTPException(status_code=500, detail="Unknown analysis status")

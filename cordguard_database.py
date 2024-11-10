@@ -107,6 +107,7 @@ class CordGuardTableMetadata:
     WORKERS_NAME = 'workers'    # Table for worker registration
     MISSIONS_NAME = 'missions'  # Table for worker missions
     RESULTS_NAME = 'results'   # Table for mission results
+    WAITLIST_NAME = 'waitlist' # Table for waitlist entries
     
 class CordGuardAnalysisRecordFields:
     """
@@ -137,6 +138,9 @@ class CordGuardFileRecordFields:
     file_id = 'file_id'
     file_name = 'file_name'
     file_full_url = 'file_full_url'
+    file_extension = 'file_extension'
+    file_size = 'file_size'
+    file_type = 'file_type'
 
 class CordGuardFileRecord:
     """
@@ -168,10 +172,22 @@ class CordGuardFileRecord:
         return {
             f"{CordGuardFileRecordFields.id}": self.id,
             f"{CordGuardFileRecordFields.file_hash}": self.file_hash,
-            f"{CordGuardFileRecordFields.analysis_id}": self.analysis_id,
-            f"{CordGuardFileRecordFields.file_id}": self.file_id,
             f"{CordGuardFileRecordFields.file_name}": self.file_name,
             f"{CordGuardFileRecordFields.file_full_url}": self.file_full_url,
+            f"{CordGuardFileRecordFields.file_extension}": self.file_extension,
+            f"{CordGuardFileRecordFields.file_size}": self.file_size,
+            f"{CordGuardFileRecordFields.file_type}": self.file_type,
+
+        }
+
+    def get_safe_dict(self) -> dict:
+        """Convert record to dictionary format for database storage, without the id and confidential data"""
+        return {
+            f"{CordGuardFileRecordFields.file_hash}": self.file_hash,
+            f"{CordGuardFileRecordFields.file_name}": self.file_name,
+            f"{CordGuardFileRecordFields.file_extension}": self.file_extension,
+            f"{CordGuardFileRecordFields.file_size}": self.file_size,
+            f"{CordGuardFileRecordFields.file_type}": self.file_type,
         }
 
 class CordGuardAnalysisRecord:
@@ -579,4 +595,14 @@ class CordGuardDatabase:
         """
         sanitized_analysis_id = self._sanitize_input(analysis_id)
         record = await self.surreal_db.select(f'{CordGuardTableMetadata.RESULTS_NAME}:{sanitized_analysis_id}')
-        return CordguardResult.from_dict(record) if record else None
+        return CordguardResult.from_dict(record['result_data']) if record else None
+    
+    async def create_waitlist_entry(self, feature: str, email: str) -> bool:
+        """
+        Create a waitlist entry in the database
+        """
+        record = await self.surreal_db.create(
+            f'{CordGuardTableMetadata.WAITLIST_NAME}:{feature}', 
+            {'email': email}
+        )
+        return True if record else False
