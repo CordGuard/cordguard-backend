@@ -29,8 +29,8 @@ class CordguardWorker:
     def is_acquired(self):
         return self.status == CordguardWorkerStatus.ACQUIRED
 
-    def set_acquired(self):
-        self.status = CordguardWorkerStatus.ACQUIRED
+    def set_acquired(self, status: bool):
+        self.status = CordguardWorkerStatus.ACQUIRED if status else CordguardWorkerStatus.NOT_ACQUIRED
 
     def get_dict(self):
         """
