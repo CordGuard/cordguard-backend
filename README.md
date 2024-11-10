@@ -168,6 +168,6 @@ Made with ❤️ by the CordGuard Team
 
 [Website](https://cordguard.org) • 
 [Documentation](https://docs.cordguard.org) • 
-[Report Bug](https://github.com/CordGuard/cordguard/issues)
+[Report Bug](https://github.com/CordGuard/cordguard-backend/issues)
 
 </div>
