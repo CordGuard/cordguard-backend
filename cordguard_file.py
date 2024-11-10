@@ -9,20 +9,21 @@ Key Components:
 - CordGuardAnalysisFile: Main class for managing file analysis operations
 - S3 Integration: Methods for uploading and retrieving files from S3 storage
 - File Metadata: Tracking of file attributes like size, type, and content hashes
+- File Organization: Structured S3 storage using date-based folder hierarchy
 
 File Processing Flow:
 ------------------
 1. File is received and CordGuardAnalysisFile instance is created
 2. Unique IDs are generated for both the analysis job and file
-3. File metadata is extracted and stored
-4. File content is uploaded to S3 if configured
+3. File metadata is extracted and stored, including file extension
+4. File content is uploaded to S3 in organized date folders
 5. Analysis can then be performed using the stored file
 
 ID Generation:
 ------------
-- Analysis IDs: Generated using timestamp and random components
-- File IDs: Generated as random hex strings
-- File Hashes: SHA256 hashes of file content
+- Analysis IDs: Generated using timestamp and random components via cordguard_codes
+- File IDs: Generated as random hex strings using secrets module
+- File Hashes: SHA256 hashes of file content for integrity verification
 
 Dependencies:
 -----------
@@ -30,19 +31,25 @@ Dependencies:
 - secrets: For secure ID generation
 - boto3: For S3 operations
 - cordguard_codes: For trackable ID generation
+- datetime: For date-based folder organization
+- cordguard_utils: For file extension extraction
 
 Usage:
 -----
     # Create new file instance
     file = CordGuardAnalysisFile(
         file_name="test.exe",
-        file_type="application/x-msdownload",
-        file_content=binary_content
+        file_type="application/x-msdownload", 
+        file_content=binary_content,
+        s3_client=s3_client,
+        bucket_name_s3="cordguard-files"
     )
     
-    # Access file metadata
+    # Upload to S3 and access metadata
+    success = file.upload_to_s3()
     analysis_id = file.analysis_id
     file_hash = file.file_hash
+    s3_url = file.get_full_url_to_file()
 
 Author: security@cordguard.org
 Version: 1.0.0
