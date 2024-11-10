@@ -27,7 +27,7 @@
 - Python 3.8+
 - SurrealDB
 - AWS S3 compatible storage
-- Required environment variables (see below)
+- Requires environment variables (see below)
 
 ### Quick Start
 
@@ -61,8 +61,8 @@ python app.py
 
 ### 🔍 Advanced Analysis
 - Static and dynamic malware analysis
-- Support for multiple file formats
-- Automatic file metadata extraction
+- Supports multiple file formats
+- Extracts file's metadata dynamically 
 - Distributed processing across VM workers
 
 ### 🏗️ Robust Architecture
@@ -76,14 +76,10 @@ python app.py
 - Secure file handling
 - Memory-safe operations
 - Path traversal prevention
-
-### 🤖 Worker System
-- Distributed VM workers
-- Automatic task distribution
-- Health monitoring
-- Secure worker authentication
+  
 
 ## 🏗️ Architecture
+
 
 ### Core Components
 
@@ -143,7 +139,7 @@ BUCKET_NAME_S3=your_bucket_name
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We eagrly waiting to receive your contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for more details.
 
 1. Fork the repository
 2. Create your feature branch
@@ -164,7 +160,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - SurrealDB team
 - FastAPI community
 - AWS S3 team
-- Tax Machine's TODO ADD
 ---
 
 <div align="center">
