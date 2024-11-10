@@ -1,16 +1,39 @@
 """
 CordGuard Globals Module
 
-This module defines global variables and configurations used throughout the CordGuard application.
-It handles AWS S3 client initialization, logging setup, and maintains global queues and DATABASE
-connections.
+This module provides global configuration and initialization for the CordGuard application.
+It manages environment variables, AWS S3 configuration, database connections, and logging setup.
+
+Key Components:
+-------------
+- Environment Loading: Loads configuration from .env files
+- AWS Configuration: S3 client settings and bucket configuration  
+- Database Connection: Async initialization of SurrealDB connection
+- Logging: Application-wide logging configuration
+- Initialization Control: Single initialization guarantee via _initialized flag
+
+Configuration Flow:
+----------------
+1. Environment variables loaded from .env file
+2. AWS S3 configuration extracted and validated
+3. Logging initialized with secure secret handling
+4. Database connection established in new event loop
+5. Global state tracked to prevent re-initialization
+
+Dependencies:
+-----------
+- os: Environment variable access
+- dotenv: .env file loading
+- logging: Application logging
+- asyncio: Async database initialization
+- cordguard_database: Database interface
 
 Author: security@cordguard.org
 Version: 1.0.0
 """
 
 import os
-import boto3
+# import boto3
 # from cordguard_queue import CordGuardQueue
 import logging
 from dotenv import load_dotenv
