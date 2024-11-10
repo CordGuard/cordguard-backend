@@ -28,7 +28,7 @@ from cordguard_auth import CordguardAuth
 from cordguard_database import CordGuardDatabase, CordGuardAnalysisStatus
 from cordguard_worker_mission import CordguardWorkerMission
 from cordguard_worker import CordguardWorker
-
+from cordguard_result import CordguardResult
 mission_api_endpoint_router = APIRouter(prefix="/mission/api", tags=["mission"])
 
 
@@ -40,33 +40,10 @@ class MissionGetRequest(BaseModel):
     hwid: str
 
 
-class CordguardResult(BaseModel):
-    """
-    Data model for analysis results submitted by workers.
-    """
-    analysis_id: str
-    type: str
-    webhook: str
-    is_valid_webhook: bool
-    is_pyinstaller: bool
-    pyinstaller_version: str
-    is_upx_packed: bool
-    python_version: str
 
-    def get_dict(self):
-        """Convert result to dictionary format for storage"""
-        return {
-            "analysis_id": self.analysis_id,
-            "type": self.type,
-            "webhook": self.webhook,
-            "is_valid_webhook": self.is_valid_webhook,
-            "is_pyinstaller": self.is_pyinstaller,
-            "pyinstaller_version": self.pyinstaller_version,
-            "is_upx_packed": self.is_upx_packed,
-            "python_version": self.python_version,
-        }
-
-
+# TODO: This endpoint("/mission/api/get") is used by the VM worker to get a new mission, it should be a websocket as it's in the state
+#       can be low latency and low bandwidth, cost and operational for a long time.
+#       This will work for now.
 @mission_api_endpoint_router.post("/get")
 async def get_mission(mission_request: MissionGetRequest):
     """
@@ -101,7 +78,8 @@ async def get_mission(mission_request: MissionGetRequest):
     
     # Verify worker is available
     if worker.is_acquired():
-        # Get mission assigned to worker
+        # If it's acquired, there is a good chance the worker could not send results probably.
+        # So we'll check if there is a mission assigned to it and return that.
         mission = await db.get_mission_by_worker_signed_hwid(worker.signed_hwid)
         if mission is not None:
             return mission.get_mission_response()
@@ -181,7 +159,37 @@ async def set_result(result: CordguardResult):
     
     # Set result in database
     db: CordGuardDatabase = await CordGuardDatabase.create()
+    analysis_record = await db.get_analysis_record_by_analysis_id(result.analysis_id)
+    if analysis_record is None:
+        return {"message": "Analysis not found"}
+    
+    # Set analysis to completed or failed based on results
+    if result.type == "unknown":
+        analysis_updated = await db.update_analysis_record_status_by_analysis_id(
+            analysis_record,
+            CordGuardAnalysisStatus.FAILED
+        )
+    else:
+        analysis_updated = await db.update_analysis_record_status_by_analysis_id(
+            analysis_record,
+            CordGuardAnalysisStatus.COMPLETED
+        )
+    
+    if not analysis_updated:
+        return {"message": "Failed to update analysis status"}
+    
+    # Update machine state to not acquired
+    worker = await db.get_worker_by_signed_hwid(result.signed_hwid)
+    if worker is None:
+        return {"message": "Worker not found"}
+    
+    worker_updated = await db.set_worker_acquired_status(worker, False)
+    if not worker_updated:
+        return {"message": "Failed to update worker state"}
 
-    result = await db.create_result_for_mission(result.analysis_id,result.get_dict())
+    # Create result in database
+    result_created = await db.create_result_for_mission(result.analysis_id,result.get_dict())
+    if not result_created:
+        return {"message": "Failed to create result"}
 
     return {"message": "Results received"}
