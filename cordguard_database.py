@@ -9,19 +9,23 @@ The module uses SurrealDB as the backend database and provides an async interfac
 Key Components:
 -------------
 - CordGuardDatabase: Main database interface class
-- CordGuardAnalysisStatus: Enum-like class for analysis status states
+- CordGuardAnalysisStatus: Enum-like class for analysis status states 
 - CordGuardTableMetadata: Constants for database table names
 - CordGuardAnalysisRecordFields: Field names for analysis records
 - CordGuardFileRecord: Data model for file records
 - CordGuardAnalysisRecord: Data model for analysis records
+- CordguardResult: Data model for analysis results
+- CordguardWorker: Data model for worker nodes
+- CordguardWorkerMission: Data model for worker missions
 
 Database Schema:
 --------------
 The database uses the following tables:
 - files: Stores file metadata and content references
 - analysis: Stores analysis records and status
-- workers: Stores registered VM worker information
+- workers: Stores registered VM worker information 
 - missions: Stores worker mission assignments
+- results: Stores analysis results from completed missions
 
 Dependencies:
 -----------
@@ -29,8 +33,12 @@ Dependencies:
 - cordguard_file: File handling models
 - cordguard_worker: Worker management models
 - cordguard_worker_mission: Mission tracking models
+- cordguard_result: Analysis result models
+- cordguard_codes: ID generation utilities
 - datetime: Timestamp handling
 - logging: Application logging
+- re: Regular expressions for input sanitization
+- json: JSON data handling
 
 Usage:
 -----
@@ -45,6 +53,9 @@ Usage:
         analysis.analysis_id, 
         CordGuardAnalysisStatus.COMPLETED
     )
+    
+    # Store analysis results
+    await db.store_analysis_results(mission_id, results)
 
 Author: security@cordguard.org
 Version: 1.0.0
@@ -414,8 +425,11 @@ class CordGuardDatabase:
         )
         if record is None:
             return None
-        
-        record = record[0]["result"][0]
+        try:
+            record = record[0]["result"][0]
+        except Exception as e:
+            logging.error(f'Error getting pending analysis: {e}, probably no pending analysis')
+            return None
         logging.info(f'Record: {record}')
         # Get the file record from the database if not provided
         if file_record is None and record is not None:
@@ -480,7 +494,7 @@ class CordGuardDatabase:
         Update the status of a worker in the database.
         """
         sanitized_hwid = self._sanitize_input(worker.signed_hwid)
-        worker.set_acquired()
+        worker.set_acquired(acquired) 
         worker = await self.surreal_db.update(
             f'{CordGuardTableMetadata.WORKERS_NAME}:{sanitized_hwid}', 
             worker.get_dict()
