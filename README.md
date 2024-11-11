@@ -157,9 +157,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- SurrealDB team
-- FastAPI community
-- AWS S3 team
+- SurrealDB
+- FastAPI
+- AWS S3
+- Tigirs Storage
 ---
 
 <div align="center">
