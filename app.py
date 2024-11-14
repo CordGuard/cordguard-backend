@@ -2,8 +2,8 @@
 CordGuard Application Server
 
 This module implements the main FastAPI application server for CordGuard, providing
-malware analysis capabilities through a REST API. It handles file uploads, analysis
-queuing, and worker coordination.
+malware analysis capabilities through a REST API. It handles file uploads, analysis and
+worker coordination.
 
 The server uses AWS S3 for secure file storage and SurrealDB for data persistence.
 It provides three main API routes:
@@ -32,7 +32,8 @@ Usage:
     
     The server will start on port 5000
 
-Author: CordGuard Security Team <security@cordguard.org>
+Author: v0id_user <contact@v0id.me>
+Security Contact: CordGuard Security Team <security@cordguard.org>
 Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """

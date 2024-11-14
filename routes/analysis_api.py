@@ -11,7 +11,8 @@ Routes:
 The router integrates with S3 for file storage and maintains an analysis queue
 for processing uploaded files asynchronously.
 
-Author: CordGuard Security Team <security@cordguard.org>
+Author: v0id_user <contact@v0id.me>
+Security Contact: CordGuard Security Team <security@cordguard.org>
 Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
