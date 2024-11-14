@@ -1,4 +1,5 @@
 #from cordguard_consumer import consume_in_app_queue
+#! DEPRECATED
 import asyncio
 
 # !Deprecated

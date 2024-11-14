@@ -16,7 +16,8 @@ Dependencies:
     cordguard_database: Database interface
     cordguard_auth: Authentication utilities
 
-Author: security@cordguard.org
+Author: CordGuard Security Team <security@cordguard.org>
+Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
 

@@ -4,7 +4,8 @@ CordGuard Authentication Module
 This module provides cryptographic services for CordGuard, including key management,
 message signing, and signature verification.
 
-Author: security@cordguard.org
+Author: CordGuard Security Team <security@cordguard.org>
+Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
 import os

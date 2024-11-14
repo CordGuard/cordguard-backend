@@ -22,7 +22,8 @@ Example usage:
     item = queue.get()
     queue.task_done()
 
-Author: security@cordguard.org
+Author: CordGuard Security Team <security@cordguard.org>
+Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 ! DEPRECATED
 """

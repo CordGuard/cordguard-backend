@@ -23,7 +23,8 @@ Usage:
         "signed_hwid": "signed-hardware-id-hex"
     }
 
-Author: security@cordguard.org
+Author: CordGuard Security Team <security@cordguard.org>
+Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
 

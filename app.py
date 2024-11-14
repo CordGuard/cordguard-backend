@@ -32,7 +32,8 @@ Usage:
     
     The server will start on port 5000
 
-Author: security@cordguard.org
+Author: CordGuard Security Team <security@cordguard.org>
+Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
 import logging

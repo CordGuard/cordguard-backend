@@ -1,3 +1,16 @@
+"""
+CordGuard Worker Module
+
+This module defines the data model for VM workers, including statuses and worker details.
+
+Classes:
+    CordguardWorkerStatus: Enum for worker statuses
+    CordguardWorker: Class representing a VM worker JSON schema
+
+Author: CordGuard Security Team <security@cordguard.org>
+Maintained by: Abjad Tech Platform <hello@abjad.cc>
+Version: 1.0.0
+"""
 class CordguardWorkerStatus:
     """
     Enum for worker statuses

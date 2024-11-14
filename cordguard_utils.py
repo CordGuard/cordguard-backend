@@ -31,7 +31,8 @@ Usage:
     # Sanitize a filename
     safe_name = safe_filename(original_name)
 
-Author: security@cordguard.org
+Author: CordGuard Security Team <security@cordguard.org>
+Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
 
