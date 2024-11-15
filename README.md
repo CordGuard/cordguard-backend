@@ -134,6 +134,7 @@ AWS_SECRET_ACCESS_KEY=your_secret_key
 AWS_ENDPOINT_URL_S3=your_s3_endpoint
 AWS_REGION=your_region
 BUCKET_NAME_S3=your_bucket_name
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 

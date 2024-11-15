@@ -73,7 +73,7 @@ from cordguard_worker import CordguardWorkerStatus
 from cordguard_result import CordguardResult
 from cordguard_codes import create_trackable_id
 import re
-import json
+from cordguard_ai import OpenAIResponse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -103,6 +103,7 @@ class CordGuardTableMetadata:
     WORKERS_NAME: Table for worker registration
     MISSIONS_NAME: Table for worker missions
     RESULTS_NAME: Table for mission results
+    AI_RESPONSES_NAME: Table for AI responses
     """
     ANALYSIS_NAME = 'analysis'  # Table for analysis records
     FILE_NAME = 'files'        # Table for file metadata
@@ -110,6 +111,7 @@ class CordGuardTableMetadata:
     MISSIONS_NAME = 'missions'  # Table for worker missions
     RESULTS_NAME = 'results'   # Table for mission results
     WAITLIST_NAME = 'waitlist' # Table for waitlist entries
+    AI_RESPONSES_NAME = 'ai_responses' # Table for AI responses
     
 class CordGuardAnalysisRecordFields:
     """
@@ -179,7 +181,6 @@ class CordGuardFileRecord:
             f"{CordGuardFileRecordFields.file_extension}": self.file_extension,
             f"{CordGuardFileRecordFields.file_size}": self.file_size,
             f"{CordGuardFileRecordFields.file_type}": self.file_type,
-
         }
 
     def get_safe_dict(self) -> dict:
@@ -608,3 +609,21 @@ class CordGuardDatabase:
             {'email': email}
         )
         return True if record else False
+    
+    async def save_ai_response(self, analysis_id: str, analyzed_text: str, ai_response: dict) -> bool:
+        """
+        Save the AI response to the database
+        """
+        record = await self.surreal_db.create(
+            f'{CordGuardTableMetadata.AI_RESPONSES_NAME}:{analysis_id}', 
+            {'analyzed_text': analyzed_text, 'ai_response': ai_response}
+        )
+        return True if record else False
+    
+    async def get_ai_response_by_analysis_id(self, analysis_id: str) -> OpenAIResponse | None:
+        """
+        Get the AI response by analysis_id
+        """
+        record = await self.surreal_db.select(f'{CordGuardTableMetadata.AI_RESPONSES_NAME}:{analysis_id}')
+        openai_response = OpenAIResponse.from_dict(record['ai_response']) if record else None
+        return openai_response if record else None
