@@ -266,6 +266,13 @@ class CordGuardDatabase:
         db = cls()
         await db._init_surreal_db()
         return db
+    
+    @classmethod
+    async def test_connection(cls) -> bool:
+        """Test the database connection"""
+        db = cls()
+        await db._init_surreal_db()
+        return True
 
     async def _init_surreal_db(self):
         """Initialize the SurrealDB connection and authenticate

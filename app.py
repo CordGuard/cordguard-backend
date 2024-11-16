@@ -62,7 +62,7 @@ app = FastAPI(
 )
 
 @app.get("/ping")
-async def ping():
+async def ping(request: Request = None):
     """
     Health check endpoint to verify server status.
 
@@ -70,7 +70,14 @@ async def ping():
         dict: Response indicating the server is alive
     """
     logger.info('Ping request received')
-    return {"status": "pong"}
+    # Extract subdomain from request
+    subdomain = request.headers.get('host').split('.')[0]
+    try:
+        await CordGuardDatabase.test_connection()
+    except Exception as e:
+        logger.error(f'Database connection failed: {e}')
+        return {"status": "pong", "subdomain": subdomain, "database_works": False}
+    return {"status": "pong", "subdomain": subdomain, "database_works": True}
 
 
 class WaitlistEntry(BaseModel):
