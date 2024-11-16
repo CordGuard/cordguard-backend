@@ -104,5 +104,8 @@ if __name__ == '__main__':
     # consumer_thread = threading.Thread(target=run_async_consumer, daemon=True)
     # consumer_thread.start()
 
+    PORT = os.getenv('PORT')
+    if not PORT:
+        raise ValueError("PORT environment variable is not set")
     # Start FastAPI server
-    uvicorn.run(app, host='0.0.0.0', port=5000)
+    uvicorn.run(app, host='0.0.0.0', port=PORT)
