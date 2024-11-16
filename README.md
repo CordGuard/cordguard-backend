@@ -4,7 +4,6 @@
 
 <img src="cordguard-assets/logo.png" width="150" height="150" style="border-radius: 10px;" alt="CordGuard Logo">
 
-
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)](https://www.python.org)
 [![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com)
@@ -20,10 +19,24 @@
 
 </div>
 
+---
+
+## 📋 Table of Contents
+- [🚀 Getting Started](#-getting-started)
+- [✨ Features](#-features)
+- [🔒 Security](#-security)
+- [🛠️ Development](#️-development)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [👥 Team](#-team)
+- [🚀 Deployment](#-deployment)
+- [🙏 Acknowledgments](#-acknowledgments)
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
-
 - Python 3.8+
 - SurrealDB
 - AWS S3 compatible storage
@@ -32,37 +45,33 @@
 ### Quick Start
 
 1. Clone the repository:
-
-```bash
-git clone https://github.com/cordguard/cordguard.git
-cd cordguard
-```
+   ```bash
+   git clone https://github.com/cordguard/cordguard.git
+   cd cordguard
+   ```
 
 2. Set up your environment variables:
-
-```bash
-cp .env.example .env
-```
+   ```bash
+   cp .env.example .env
+   ```
 
 3. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 4. Run the application:
-
-```bash
-python app.py
-```
-
+   ```bash
+   python app.py
+   ```
+d
 
 ## ✨ Features
 
 ### 🔍 Advanced Analysis
 - Static and dynamic malware analysis
 - Supports multiple file formats
-- Extracts file's metadata dynamically 
+- Extracts file metadata dynamically 
 - Distributed processing across VM workers
 
 ### 🏗️ Robust Architecture
@@ -76,33 +85,7 @@ python app.py
 - Secure file handling
 - Memory-safe operations
 - Path traversal prevention
-  
 
-## 🏗️ Architecture
-
-
-### Core Components
-
-mermaid
-graph TD
-A[Client] --> B[FastAPI Server]
-B --> C[File Processing]
-C --> D[S3 Storage]
-C --> E[Analysis Queue]
-E --> F[VM Workers]
-F --> G[Results DB]
-
-
-### File Processing Flow
-
-1. **Upload** - Secure file reception and validation
-2. **Storage** - S3 storage with deduplication
-3. **Analysis** - Distributed processing across workers
-4. **Results** - Centralized result aggregation
-
-## 📚 API Reference
-
-### Analysis Endpoints
 
 
 ## 🔒 Security
@@ -113,37 +96,41 @@ F --> G[Results DB]
 - PEM format key storage
 
 ### File Safety
+- Secure file uploads
+- Validation and deduplication before analysis
 
 
 ## 🛠️ Development
 
-### Project Structure
-
-cordguard/
-├── app.py # Application entry
-├── routes/ # API endpoints
-├── cordguard_core.py # Core functionality
-├── cordguard_database.py # Database operations
-└── cordguard_utils.py # Utility functions
-
 ### Environment Variables
-
 ```bash
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
 AWS_ENDPOINT_URL_S3=your_s3_endpoint
 AWS_REGION=your_region
 BUCKET_NAME_S3=your_bucket_name
+
 OPENAI_API_KEY=your_openai_api_key
+
 SURREALDB_USERNAME=your_surrealdb_username
 SURREALDB_PASSWORD=your_surrealdb_password
 SURREALDB_URL=your_surrealdb_url
+
+REGISTRY_HOST=
+API_HOST=
+WORKER_HOST=
+AI_API_HOST=
+
+API_KEY=
+WORKER_API_KEY=
+REGISTRY_API_KEY=
+AI_API_KEY=
 ```
 
 
 ## 🤝 Contributing
 
-We eagrly waiting to receive your contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for more details.
+We eagerly await your contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for more details.
 
 1. Fork the repository
 2. Create your feature branch
@@ -151,13 +138,24 @@ We eagrly waiting to receive your contributions! Please read our [Contributing G
 4. Push to the branch
 5. Open a Pull Request
 
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+
 ## 👥 Team
 
 - Security Team (security@cordguard.org)
+
+
+## 🚀 Deployment
+
+Deploy with Fly.io:
+```bash
+fly deploy
+```
+
 
 ## 🙏 Acknowledgments
 
@@ -165,6 +163,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - FastAPI
 - AWS S3
 - Tigirs Storage
+- Fly.io
+
 ---
 
 <div align="center">
