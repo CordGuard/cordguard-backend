@@ -135,6 +135,8 @@ AWS_ENDPOINT_URL_S3=your_s3_endpoint
 AWS_REGION=your_region
 BUCKET_NAME_S3=your_bucket_name
 OPENAI_API_KEY=your_openai_api_key
+SURREALDB_USERNAME=your_surrealdb_username
+SURREALDB_PASSWORD=your_surrealdb_password
 ```
 
 

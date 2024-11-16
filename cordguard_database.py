@@ -74,7 +74,7 @@ from cordguard_result import CordguardResult
 from cordguard_codes import create_trackable_id
 import re
 from cordguard_ai import OpenAIResponse
-
+import os
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
@@ -280,7 +280,11 @@ class CordGuardDatabase:
 
         logging.info('Initializing SurrealDB')
         await self.surreal_db.connect()
-        await self.surreal_db.signin({'user': 'root', 'pass': 'root'})
+        SURREALDB_USERNAME = os.getenv('SURREALDB_USERNAME')
+        SURREALDB_PASSWORD = os.getenv('SURREALDB_PASSWORD')
+        if SURREALDB_USERNAME is None or SURREALDB_PASSWORD is None:
+            raise Exception('SurrealDB credentials not found')
+        await self.surreal_db.signin({'user': SURREALDB_USERNAME, 'pass': SURREALDB_PASSWORD})
         await self.surreal_db.use('cordguard', 'guard')
 
         # Try to create tables if they don't exist
