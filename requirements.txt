@@ -1,0 +1,11 @@
+boto3==1.35.54
+cryptography==43.0.3
+fastapi==0.115.5
+openai==1.54.4
+pydantic==2.9.2
+python-dotenv==1.0.1
+python_magic==0.4.27
+Requests==2.32.3
+surrealdb==0.3.2
+uvicorn==0.32.0
+Werkzeug==3.1.3
