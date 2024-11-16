@@ -6,7 +6,7 @@ WORKDIR /app
 
 
 # Install libmagic
-RUN apt-get update && apt-get install -y libmagic1 file
+RUN apt install libmagic1
 RUN python -m venv .venv
 COPY requirements.txt ./
 RUN .venv/bin/pip install -r requirements.txt
