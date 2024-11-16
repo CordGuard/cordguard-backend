@@ -77,11 +77,13 @@ def globals_initialize():
      
     try:
         # Create and run a new event loop for database initialization
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        DATABASE = loop.run_until_complete(CordGuardDatabase.create())
-        loop.close()
-        logger.info('Database initialized')
+        # !DEPRECATED
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(loop)
+        # DATABASE = loop.run_until_complete(CordGuardDatabase.create())
+        # loop.close()
+        # logger.info('Database initialized')
+        pass
     except Exception as e:
         logger.error(f"Failed to initialize DB: {e}", exc_info=True)
         raise  # Re-raise the exception to prevent partial initialization

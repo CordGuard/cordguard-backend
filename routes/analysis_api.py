@@ -22,7 +22,7 @@ import logging
 from cordguard_globals import BUCKET_NAME_S3
 from cordguard_utils import safe_read_file, safe_filename, does_file_have_extension
 from cordguard_file import CordGuardAnalysisFile
-import magic
+import puremagic
 from cordguard_database import CordGuardDatabase
 from cordguard_database import CordGuardAnalysisStatus # TODO: This(CordGuardAnalysisStatus) should not be here, but i'm lazy to move it :P (#V0ID)
 from cordguard_utils import is_sub_host
@@ -150,7 +150,8 @@ async def upload(file: UploadFile = File(...), request: Request = None):
         raise HTTPException(status_code=400, detail="File too large or empty")
     
     # Create analysis file object
-    mime_type = file.content_type or magic.from_buffer(content, mime=True)
+    magic_result = puremagic.magic_stream(file.file, filename)[0]
+    mime_type = magic_result.mime_type
 
     # if it's ELF, we need to reject it
     if mime_type == "application/x-executable":

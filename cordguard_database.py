@@ -279,7 +279,7 @@ class CordGuardDatabase:
         SURREALDB_URL = os.getenv('SURREALDB_URL')
         self.surreal_db = Surreal(SURREALDB_URL)
 
-        logging.info('Initializing SurrealDB')
+        logging.info(f'Initializing SurrealDB connection at {SURREALDB_URL}')
         await self.surreal_db.connect()
         SURREALDB_USERNAME = os.getenv('SURREALDB_USERNAME')
         SURREALDB_PASSWORD = os.getenv('SURREALDB_PASSWORD')
