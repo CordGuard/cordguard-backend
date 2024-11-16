@@ -276,7 +276,8 @@ class CordGuardDatabase:
         Raises:
             Exception: If connection, authentication or database selection fails
         """
-        self.surreal_db = Surreal("ws://localhost:8000/rpc")
+        SURREALDB_URL = os.getenv('SURREALDB_URL')
+        self.surreal_db = Surreal(SURREALDB_URL)
 
         logging.info('Initializing SurrealDB')
         await self.surreal_db.connect()
