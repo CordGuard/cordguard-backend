@@ -1,6 +1,6 @@
 boto3==1.35.54
 cryptography==43.0.3
-fastapi==0.115.5
+fastapi
 openai==1.54.4
 pydantic==2.9.2
 python-dotenv==1.0.1
