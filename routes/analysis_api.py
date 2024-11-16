@@ -17,7 +17,7 @@ Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 import logging
 from cordguard_globals import BUCKET_NAME_S3
 from cordguard_utils import safe_read_file, safe_filename, does_file_have_extension
@@ -25,13 +25,14 @@ from cordguard_file import CordGuardAnalysisFile
 import magic
 from cordguard_database import CordGuardDatabase
 from cordguard_database import CordGuardAnalysisStatus # TODO: This(CordGuardAnalysisStatus) should not be here, but i'm lazy to move it :P (#V0ID)
-
+from cordguard_utils import is_sub_host
+import os
 logging.basicConfig(level=logging.INFO)
 
 analysis_api_endpoint_router = APIRouter(prefix="/analysis/api", tags=["analysis"])
 
 @analysis_api_endpoint_router.get("/status/{analysis_id}")
-async def status(analysis_id: str):
+async def status(analysis_id: str, request: Request = None):
     """
     Get the status of a file analysis.
 
@@ -42,6 +43,9 @@ async def status(analysis_id: str):
         dict: Analysis status information
     """
     db: CordGuardDatabase = await CordGuardDatabase.create()
+    if not is_sub_host(request, os.getenv('ANALYSIS_HOST', 'analysis.')):
+        raise HTTPException(status_code=403, detail="Analysis API only allowed through API subdomain")
+    
     analysis_record = await db.get_analysis_record_by_analysis_id(analysis_id)
     if analysis_record is None:
         raise HTTPException(status_code=404, detail="Analysis record not found")
@@ -84,7 +88,7 @@ async def status(analysis_id: str):
         raise HTTPException(status_code=500, detail="Unknown analysis status")
 
 @analysis_api_endpoint_router.post("/upload")
-async def upload(file: UploadFile = File(...)):
+async def upload(file: UploadFile = File(...), request: Request = None):
     """
     Upload a file for malware analysis.
 
@@ -104,6 +108,15 @@ async def upload(file: UploadFile = File(...)):
     """
     logging.info('File upload request received')
 
+    if not is_sub_host(request, os.getenv('API_HOST', 'api.')):
+        raise HTTPException(
+            status_code=403, 
+            detail="File upload only allowed through analysis subdomain"
+        )
+    
+    if request.headers.get('x-api-key') != os.getenv('ANALYSIS_API_KEY'):
+        raise HTTPException(status_code=403, detail="Invalid Analysis API key")
+    
     # Define accepted file extensions
     list_of_accepted_file_types = [
         # Scripts

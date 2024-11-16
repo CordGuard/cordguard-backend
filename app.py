@@ -46,6 +46,9 @@ from cordguard_core import init_fastapi_app
 import uvicorn
 from cordguard_database import CordGuardDatabase
 from pydantic import BaseModel
+from fastapi import HTTPException, Request
+from cordguard_utils import is_sub_host
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -75,10 +78,16 @@ class WaitlistEntry(BaseModel):
     feature: str
 
 @app.post("/feature/join-waitlist")
-async def join_waitlist(request: WaitlistEntry):
+async def join_waitlist(request: WaitlistEntry, full_request: Request = None):
     """
     Join the waitlist for a feature
     """
+    if not is_sub_host(full_request, os.getenv('GENERIC_HOST', 'generic.')):
+        raise HTTPException(status_code=403, detail="Generic API only allowed through generic subdomain")
+    
+    if full_request.headers.get('x-api-key') != os.getenv('GENERATE_API_KEY'):
+        raise HTTPException(status_code=403, detail="Invalid Generic API key")
+    
     db: CordGuardDatabase = await CordGuardDatabase.create()
     record = await db.create_waitlist_entry(request.feature, request.email)
     return {"success": record}

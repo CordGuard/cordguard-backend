@@ -39,6 +39,7 @@ Version: 1.0.0
 
 import logging
 from werkzeug.utils import secure_filename
+from fastapi import Request
 
 logging.basicConfig(level=logging.INFO)
 
@@ -129,3 +130,12 @@ def extract_file_extension(filename):
 
 def does_file_have_extension(filename):
     return '.' in filename
+
+def is_sub_host(request: Request, sub_host: str = '') -> bool:
+    host = request.headers.get('host', '')
+    if not host:
+        return False
+    if sub_host == '':
+        return False
+    
+    return host.startswith(sub_host)

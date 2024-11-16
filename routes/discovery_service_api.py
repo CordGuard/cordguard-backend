@@ -29,12 +29,14 @@ Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 import logging
 from cordguard_worker import CordguardWorker, CordguardWorkerStatus
 from cordguard_database import CordGuardDatabase
 from cordguard_auth import CordguardAuth
+import os
+from cordguard_utils import is_sub_host
 
 logging.basicConfig(level=logging.INFO)
 
@@ -46,7 +48,7 @@ class WorkerRegistration(BaseModel):
     public_ip: str
 
 @ds_api_endpoint_router.post("/register/vm/worker")
-async def register_vm_worker(registration: WorkerRegistration):
+async def register_vm_worker(registration: WorkerRegistration, request: Request):
     """
     Register a new VM worker node with the system.
     
@@ -77,6 +79,15 @@ async def register_vm_worker(registration: WorkerRegistration):
     logging.info('Register VM worker request received')
     
     try:
+        if not is_sub_host(request, os.getenv('REGISTRY_HOST', 'registry.')):
+            raise HTTPException(
+                status_code=403, 
+                detail="Worker registration only allowed through registry subdomain"
+            )
+
+        if request.headers.get('x-api-key') != os.getenv('REGISTRY_API_KEY'):
+            raise HTTPException(status_code=403, detail="Invalid Registry API key")
+
         # Create worker instance with initial unsigned status
         worker = CordguardWorker(
             hwid=registration.hwid,

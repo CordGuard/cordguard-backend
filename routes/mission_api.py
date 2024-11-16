@@ -23,7 +23,8 @@ Version: 1.0.0
 """
 
 import logging
-from fastapi import APIRouter, HTTPException
+import os
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from cordguard_auth import CordguardAuth
@@ -31,6 +32,8 @@ from cordguard_database import CordGuardDatabase, CordGuardAnalysisStatus
 from cordguard_worker_mission import CordguardWorkerMission
 from cordguard_worker import CordguardWorker
 from cordguard_result import CordguardResult
+from cordguard_utils import is_sub_host
+
 mission_api_endpoint_router = APIRouter(prefix="/mission/api", tags=["mission"])
 
 
@@ -41,13 +44,11 @@ class MissionGetRequest(BaseModel):
     signed_hwid: str
     hwid: str
 
-
-
 # TODO: This endpoint("/mission/api/get") is used by the VM worker to get a new mission, it should be a websocket as it's in the state
 #       can be low latency and low bandwidth, cost and operational for a long time.
 #       This will work for now.
 @mission_api_endpoint_router.post("/get")
-async def get_mission(mission_request: MissionGetRequest):
+async def get_mission(mission_request: MissionGetRequest, request: Request = None):
     """
     Get a new mission for a VM worker.
     
@@ -73,6 +74,11 @@ async def get_mission(mission_request: MissionGetRequest):
     """
     logging.info(f'Get mission request received: {mission_request.signed_hwid}')
     db: CordGuardDatabase = await CordGuardDatabase.create()
+    if not is_sub_host(request, os.getenv('WORKER_HOST', 'workers.')):
+        raise HTTPException(status_code=403, detail="Worker API only allowed through workers subdomain")
+    
+    if request.headers.get('x-api-key') != os.getenv('WORKER_API_KEY'):
+        raise HTTPException(status_code=403, detail="Invalid Worker API key")
     
     worker = await db.get_worker_by_signed_hwid(mission_request.signed_hwid)
     if worker is None:
@@ -138,7 +144,7 @@ async def get_mission(mission_request: MissionGetRequest):
 
 
 @mission_api_endpoint_router.post("/set/result")
-async def set_result(result: CordguardResult):
+async def set_result(result: CordguardResult, request: Request = None):
     """
     Submit analysis results for a completed mission.
     
@@ -158,6 +164,12 @@ async def set_result(result: CordguardResult):
         >>> Returns: {"message": "Results received"}
     """
     logging.info('Set result request received')
+    
+    if not is_sub_host(request, os.getenv('WORKER_HOST', 'workers.')):
+        raise HTTPException(status_code=403, detail="Worker API only allowed through workers subdomain")
+    
+    if request.headers.get('x-api-key') != os.getenv('WORKER_API_KEY'):
+        raise HTTPException(status_code=403, detail="Invalid Worker API key")
     
     # Set result in database
     db: CordGuardDatabase = await CordGuardDatabase.create()
