@@ -85,7 +85,7 @@ async def join_waitlist(request: WaitlistEntry, full_request: Request = None):
     if not is_sub_host(full_request, os.getenv('GENERIC_HOST', 'generic.')):
         raise HTTPException(status_code=403, detail="Generic API only allowed through generic subdomain")
     
-    if full_request.headers.get('x-api-key') != os.getenv('GENERATE_API_KEY'):
+    if full_request.headers.get('x-api-key') != os.getenv('GENERIC_API_KEY'):
         raise HTTPException(status_code=403, detail="Invalid Generic API key")
     
     db: CordGuardDatabase = await CordGuardDatabase.create()
