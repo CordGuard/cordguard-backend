@@ -78,13 +78,15 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     Handle HTTP exceptions and log request details
     """
     logger.error(f"""
-    404 Error Details:
+    {exc.status_code} Error Details:
     URL: {request.url}
     Method: {request.method}
     Headers: {request.headers}
     Client Host: {request.client.host}
     Path Params: {request.path_params}
     Query Params: {request.query_params}
+    ---
+    Full Exception: {exc}
     """)
     
     return JSONResponse(
