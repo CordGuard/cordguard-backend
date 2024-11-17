@@ -98,7 +98,7 @@ async def register_vm_worker(registration: WorkerRegistration, request: Request)
             is_signed=False,
             status=CordguardWorkerStatus.NOT_ACQUIRED
         )
-        logging.info('Created worker instance: %s', worker.get_dict())
+        logging.info('Created worker instance not saved in database yet: %s', worker.get_dict())
         db: CordGuardDatabase = await CordGuardDatabase.create()
 
         # Verify worker signature

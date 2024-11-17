@@ -305,8 +305,11 @@ class CordGuardDatabase:
                 DEFINE TABLE {CordGuardTableMetadata.ANALYSIS_NAME};
                 DEFINE TABLE {CordGuardTableMetadata.WORKERS_NAME};
                 DEFINE TABLE {CordGuardTableMetadata.MISSIONS_NAME};
+                DEFINE TABLE {CordGuardTableMetadata.RESULTS_NAME};
+                DEFINE TABLE {CordGuardTableMetadata.WAITLIST_NAME};
+                DEFINE TABLE {CordGuardTableMetadata.AI_RESPONSES_NAME};
             """)
-            logging.info('Database tables created successfully.')
+            logging.info('Database initialized with tables successfully.')
         except Exception as e:
             logging.warning(f"Tables may already exist: {e}")
             pass
