@@ -63,6 +63,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Initialize application with routers
+logger.info('Initializing application with routers')
+app = init_fastapi_app(app, [
+    analysis_api_endpoint_router,
+        ds_api_endpoint_router,
+        mission_api_endpoint_router
+])
+    
+
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """
@@ -134,14 +143,7 @@ async def join_waitlist(request: WaitlistEntry, full_request: Request = None):
     return {"success": record}
 
 if __name__ == '__main__':
-    # Initialize application with routers
-    logger.info('Initializing application with routers')
-    app =init_fastapi_app(app, [
-        analysis_api_endpoint_router,
-        ds_api_endpoint_router,
-        mission_api_endpoint_router
-    ])
-    
+ 
     # Start background consumer thread
     # consumer_thread = threading.Thread(target=run_async_consumer, daemon=True)
     # consumer_thread.start()

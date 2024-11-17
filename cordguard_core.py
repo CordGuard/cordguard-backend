@@ -48,9 +48,11 @@ def init_fastapi_app(app: FastAPI, routers: list[APIRouter]):
     
     # Include routers
     for router in routers:
+        logger.info(f"Including router {router.prefix} with routes:")
+        for route in router.routes:
+            logger.info(f"  - {route.path} [{route.methods}]")
         app.include_router(router)
-        logger.info(f"Router {router.prefix} included in the application.")
-    
+        
     logger.info("FastAPI application initialized successfully.")
     return app
 
