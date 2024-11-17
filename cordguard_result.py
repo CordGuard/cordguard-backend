@@ -18,6 +18,7 @@ Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
 from pydantic import BaseModel
+import logging
 
 # For FastAPI
 class CordguardResult(BaseModel):
@@ -64,6 +65,7 @@ class CordguardResult(BaseModel):
         self.analysis_id = analysis_id
         self.mission_id = mission_id
         self.signed_hwid = signed_hwid
+        logging.info(f'Initialized CordguardResult with analysis_id: {analysis_id}, mission_id: {mission_id}, signed_hwid: {signed_hwid}')
     
     @staticmethod
     def from_dict(data: dict):
@@ -88,6 +90,7 @@ class CordguardResult(BaseModel):
         result.python_version = data['python_version']
         result.signed_hwid = data['signed_hwid']
         result.status = data['status']
+        logging.info(f'Created CordguardResult from dict: {result.get_dict()}')
         return result
 
     def set_type_of_stealer(self, type: str):
@@ -98,6 +101,7 @@ class CordguardResult(BaseModel):
             type (str): Type of stealer malware
         """
         self.type = type
+        logging.info(f'Set type of stealer to: {type}')
 
     def set_webhook(self, webhook: str):
         """
@@ -107,6 +111,7 @@ class CordguardResult(BaseModel):
             webhook (str): Webhook URL found in malware
         """
         self.webhook = webhook
+        logging.info(f'Set webhook to: {webhook}')
     
     def set_is_valid_webhook(self, is_valid: bool):
         """
@@ -116,6 +121,7 @@ class CordguardResult(BaseModel):
             is_valid (bool): Webhook validity status
         """
         self.is_valid_webhook = is_valid
+        logging.info(f'Set is_valid_webhook to: {is_valid}')
     
     def set_is_it_pyinstaller(self, is_pyinstaller: bool):
         """
@@ -125,6 +131,7 @@ class CordguardResult(BaseModel):
             is_pyinstaller (bool): PyInstaller usage status
         """
         self.is_pyinstaller = is_pyinstaller
+        logging.info(f'Set is_pyinstaller to: {is_pyinstaller}')
 
     def set_pyinstaller_version(self, version: str):
         """
@@ -134,6 +141,7 @@ class CordguardResult(BaseModel):
             version (str): PyInstaller version string
         """
         self.pyinstaller_version = version
+        logging.info(f'Set pyinstaller_version to: {version}')
     
     def set_is_upx_packed(self, is_upx_packed: bool):
         """
@@ -143,6 +151,7 @@ class CordguardResult(BaseModel):
             is_upx_packed (bool): UPX packing status
         """
         self.is_upx_packed = is_upx_packed
+        logging.info(f'Set is_upx_packed to: {is_upx_packed}')
 
     def set_python_version(self, version: str):
         """
@@ -152,16 +161,8 @@ class CordguardResult(BaseModel):
             version (str): Python version string
         """
         self.python_version = version
+        logging.info(f'Set python_version to: {version}')
     
-    def set_is_valid_webhook(self, is_valid: bool):
-        """
-        Set whether the webhook is valid.
-
-        Args:
-            is_valid (bool): Webhook validity status
-        """
-        self.is_valid_webhook = is_valid
-
     def set_status(self, status: str):
         """
         Set the status of the result.
@@ -170,6 +171,7 @@ class CordguardResult(BaseModel):
             status (str): Status of the result
         """
         self.status = status
+        logging.info(f'Set status to: {status}')
 
     def get_dict(self):
         """
@@ -178,7 +180,7 @@ class CordguardResult(BaseModel):
         Returns:
             dict: Dictionary containing all result attributes
         """
-        return {
+        result_dict = {
             "status": self.status,
             "mission_id": self.mission_id,
             "analysis_id": self.analysis_id,
@@ -191,3 +193,5 @@ class CordguardResult(BaseModel):
             "python_version": self.python_version,
             "signed_hwid": self.signed_hwid
         }
+        logging.info(f'Converted result to dict: {result_dict}')
+        return result_dict

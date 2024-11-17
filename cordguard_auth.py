@@ -10,10 +10,15 @@ Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
 import os
+import logging
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes, PrivateKeyTypes
 from cryptography.exceptions import InvalidSignature
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class AsymmetricKeysTypes:
     """Supported asymmetric key types"""
@@ -48,6 +53,7 @@ class CordguardAuth:
         self.public_key_path: str = public_key_path
         self.public_key: ed25519.Ed25519PublicKey | None = None
         self.private_key: ed25519.Ed25519PrivateKey | None = None
+        logger.info("Initializing CordguardAuth with key type: %s", self.key_type)
         self._load_keys()
     
     def _load_keys(self):
@@ -60,16 +66,19 @@ class CordguardAuth:
         public_key: PublicKeyTypes | None = None
         private_key: PrivateKeyTypes | None = None
         
+        logger.info("Loading public key from %s", self.public_key_path)
         # Load public key from PEM file
         with open(self.public_key_path, "rb") as f:
             public_key = serialization.load_pem_public_key(f.read())
 
+        logger.info("Loading private key from %s", self.private_key_path)
         # Load private key from PEM file
         with open(self.private_key_path, "rb") as f:
             private_key = serialization.load_pem_private_key(f.read(), password=None)
 
         # Convert loaded keys to Ed25519 instances if using ED25519
         if self.key_type == AsymmetricKeysTypes.ED25519:
+            logger.info("Converting keys to Ed25519 instances.")
             # Convert public key to raw format and create Ed25519PublicKey instance
             self.public_key = ed25519.Ed25519PublicKey.from_public_bytes(
                 public_key.public_bytes(
@@ -86,7 +95,7 @@ class CordguardAuth:
                     encryption_algorithm=serialization.NoEncryption()
                 )
             )
-
+            logger.info("Keys loaded and converted successfully.")
 
     def sign(self, message: bytes) -> bytes:
         """
@@ -98,8 +107,8 @@ class CordguardAuth:
         Returns:
             bytes: The signature for the message
         """
+        logger.info("Signing message: %s", message)
         return self.private_key.sign(message)
-
 
     def verify(self, message: bytes, signature: bytes) -> bool:
         """
@@ -112,9 +121,12 @@ class CordguardAuth:
         Returns:
             bool: True if signature is valid, False otherwise
         """
+        logger.info("Verifying signature for message: %s", message)
         try:
             # Attempt to verify the signature - will raise InvalidSignature if invalid
             self.public_key.verify(signature, message)
+            logger.info("Signature verified successfully.")
             return True
         except InvalidSignature:
+            logger.warning("Invalid signature for message: %s", message)
             return False

@@ -265,6 +265,7 @@ class CordGuardDatabase:
         """
         db = cls()
         await db._init_surreal_db()
+        logging.info("Database instance created and initialized.")
         return db
     
     @classmethod
@@ -272,6 +273,7 @@ class CordGuardDatabase:
         """Test the database connection"""
         db = cls()
         await db._init_surreal_db()
+        logging.info("Database connection tested successfully.")
         return True
 
     async def _init_surreal_db(self):
@@ -291,6 +293,7 @@ class CordGuardDatabase:
         SURREALDB_USERNAME = os.getenv('SURREALDB_USERNAME')
         SURREALDB_PASSWORD = os.getenv('SURREALDB_PASSWORD')
         if SURREALDB_USERNAME is None or SURREALDB_PASSWORD is None:
+            logging.error('SurrealDB credentials not found')
             raise Exception('SurrealDB credentials not found')
         await self.surreal_db.signin({'user': SURREALDB_USERNAME, 'pass': SURREALDB_PASSWORD})
         await self.surreal_db.use('cordguard', 'guard')
@@ -303,6 +306,7 @@ class CordGuardDatabase:
                 DEFINE TABLE {CordGuardTableMetadata.WORKERS_NAME};
                 DEFINE TABLE {CordGuardTableMetadata.MISSIONS_NAME};
             """)
+            logging.info('Database tables created successfully.')
         except Exception as e:
             logging.warning(f"Tables may already exist: {e}")
             pass
@@ -315,6 +319,7 @@ class CordGuardDatabase:
             f'{CordGuardTableMetadata.FILE_NAME}:{sanitized_hash}', 
             file.get_dict()
         )
+        logging.info(f'File record created for hash: {sanitized_hash}')
         return CordGuardFileRecord(**record) if record else None
 
     async def get_file_record_by_file_hash(self, file_hash: str) -> CordGuardFileRecord | None:
@@ -323,6 +328,7 @@ class CordGuardDatabase:
         record = await self.surreal_db.select(
             f'{CordGuardTableMetadata.FILE_NAME}:{file_hash}'
         )   
+        logging.info(f'File record retrieved for hash: {file_hash}')
         return CordGuardFileRecord(**record) if record else None
 
     async def new_analysis_for_file(self, cordguard_file: CordGuardAnalysisFile) -> CordGuardAnalysisRecord | None:
@@ -390,7 +396,7 @@ class CordGuardDatabase:
                 f'{CordGuardAnalysisRecordFields.file_hash}':            f'{CordGuardTableMetadata.FILE_NAME}:{sanitized_file_hash}',
         }
         )
-        logging.info(f'Record: {analysis_record}')
+        logging.info(f'Analysis record created: {analysis_record}')
         return CordGuardAnalysisRecord(file=file_record, analysis_id=cordguard_file.analysis_id, **analysis_record) if analysis_record else None
     
     async def update_analysis_record_status_by_analysis_id(self, analysis_record: CordGuardAnalysisRecord, status: CordGuardAnalysisStatus) -> bool:
@@ -421,7 +427,7 @@ class CordGuardDatabase:
             f'{CordGuardTableMetadata.ANALYSIS_NAME}:{sanitized_analysis_id}', 
             analysis_record.get_dict()
         )
-        logging.info(f'Record: {record}')
+        logging.info(f'Analysis record updated: {record}')
         return True if record else False
 
     async def get_analysis_record_by_analysis_id(self, analysis_id: str, file_record: CordGuardFileRecord = None) -> CordGuardAnalysisRecord | None:
@@ -429,6 +435,7 @@ class CordGuardDatabase:
         # Get the analysis record from the database
         record = await self.surreal_db.select(f'{CordGuardTableMetadata.ANALYSIS_NAME}:{sanitized_analysis_id}')
         if not record:
+            logging.warning(f'No analysis record found for ID: {sanitized_analysis_id}')
             return None
         
         # Get the file record from the database if not provided
@@ -436,6 +443,7 @@ class CordGuardDatabase:
             file_record = await self.get_file_record_by_file_hash(record['file_hash'])
 
         # Create and return the analysis record
+        logging.info(f'Analysis record retrieved: {record}')
         return CordGuardAnalysisRecord(
             id=record.get('id', ''),
             status=record.get('status', ''),
@@ -455,13 +463,14 @@ class CordGuardDatabase:
             f"SELECT * FROM {CordGuardTableMetadata.ANALYSIS_NAME} WHERE status = '{CordGuardAnalysisStatus.PENDING}' LIMIT 1",
         )
         if record is None:
+            logging.info('No pending analysis found.')
             return None
         try:
             record = record[0]["result"][0]
         except Exception as e:
             logging.error(f'Error getting pending analysis: {e}, probably no pending analysis')
             return None
-        logging.info(f'Record: {record}')
+        logging.info(f'Pending analysis record retrieved: {record}')
         # Get the file record from the database if not provided
         if file_record is None and record is not None:
             file_record = await self.get_file_record_by_file_hash(record['file_hash'])
@@ -488,7 +497,7 @@ class CordGuardDatabase:
             f'{CordGuardTableMetadata.WORKERS_NAME}:{sanitized_hwid}', 
             worker.get_dict()
         )
-        logging.info(f'Record: {record}')
+        logging.info(f'Worker registered: {sanitized_hwid}')
         return worker if record else None
     
     async def get_worker_by_signed_hwid(self, signed_hwid: str) -> CordguardWorker | None:
@@ -505,6 +514,7 @@ class CordGuardDatabase:
         record = await self.surreal_db.select(f'{CordGuardTableMetadata.WORKERS_NAME}:{sanitized_hwid}')
         
         if not record:
+            logging.warning(f'No worker found for signed HWID: {sanitized_hwid}')
             return None
             
         logging.info(f'Found worker record: {record}')
@@ -531,11 +541,13 @@ class CordGuardDatabase:
             worker.get_dict()
         )
         if worker:
+            logging.info(f'Worker status updated: {sanitized_hwid}, acquired: {acquired}')
             del worker['id']
             is_acquired = worker.pop('is_acquired', False)
             status = (CordguardWorkerStatus.ACQUIRED if is_acquired 
                      else CordguardWorkerStatus.NOT_ACQUIRED)
             return CordguardWorker(**worker, status=status)
+        logging.error(f'Failed to update worker status for: {sanitized_hwid}')
         return None
     
     async def create_mission_for_worker(self, worker: CordguardWorker, analysis: CordGuardAnalysisFile) -> CordguardWorkerMission | None:
@@ -565,7 +577,7 @@ class CordGuardDatabase:
             f'{CordGuardTableMetadata.MISSIONS_NAME}:{worker.signed_hwid}', 
             mission.get_dict()
         )
-        logging.info(f'Record: {record}')
+        logging.info(f'Mission created for worker: {worker.signed_hwid}')
         return mission if record else None
     
     async def get_mission_by_worker_signed_hwid(self, signed_hwid: str) -> CordguardWorkerMission | None:
@@ -574,19 +586,24 @@ class CordGuardDatabase:
         """
         record = await self.surreal_db.select(f'{CordGuardTableMetadata.MISSIONS_NAME}:{signed_hwid}')
         if record is None:
+            logging.warning(f'No mission found for worker signed HWID: {signed_hwid}')
             return None
         analysis_record = await self.get_analysis_record_by_analysis_id(record['file']['analysis_id'])
         if analysis_record is None:
+            logging.warning(f'No analysis record found for mission: {record}')
             return None
         file_record = await self.get_file_record_by_file_hash(analysis_record.file_hash)
         if file_record is None:
+            logging.warning(f'No file record found for analysis: {analysis_record.file_hash}')
             return None
         del record['id']
 
         worker = await self.get_worker_by_signed_hwid(signed_hwid)
         if worker is None:
+            logging.warning(f'No worker found for signed HWID: {signed_hwid}')
             return None
 
+        logging.info(f'Mission retrieved for worker: {signed_hwid}')
         return CordguardWorkerMission(worker=worker, analysis=analysis_record, file=file_record) if record else None
     
     async def create_result_for_mission(self, analysis_id: str, result: dict) -> dict | None:
@@ -602,6 +619,7 @@ class CordGuardDatabase:
                 'created_at': str(datetime.now())
             }
         )
+        logging.info(f'Result created for mission: {analysis_id}')
         return result if record else None
 
     async def get_analysis_results_by_analysis_id(self, analysis_id: str) -> CordguardResult | None:
@@ -610,6 +628,7 @@ class CordGuardDatabase:
         """
         sanitized_analysis_id = self._sanitize_input(analysis_id)
         record = await self.surreal_db.select(f'{CordGuardTableMetadata.RESULTS_NAME}:{sanitized_analysis_id}')
+        logging.info(f'Analysis results retrieved for ID: {sanitized_analysis_id}')
         return CordguardResult.from_dict(record['result_data']) if record else None
     
     async def create_waitlist_entry(self, feature: str, email: str) -> bool:
@@ -620,6 +639,7 @@ class CordGuardDatabase:
             f'{CordGuardTableMetadata.WAITLIST_NAME}:{feature}', 
             {'email': email}
         )
+        logging.info(f'Waitlist entry created for feature: {feature}, email: {email}')
         return True if record else False
     
     async def save_ai_response(self, analysis_id: str, analyzed_text: str, ai_response: dict) -> bool:
@@ -630,6 +650,7 @@ class CordGuardDatabase:
             f'{CordGuardTableMetadata.AI_RESPONSES_NAME}:{analysis_id}', 
             {'analyzed_text': analyzed_text, 'ai_response': ai_response}
         )
+        logging.info(f'AI response saved for analysis ID: {analysis_id}')
         return True if record else False
     
     async def get_ai_response_by_analysis_id(self, analysis_id: str) -> OpenAIResponse | None:
@@ -637,5 +658,6 @@ class CordGuardDatabase:
         Get the AI response by analysis_id
         """
         record = await self.surreal_db.select(f'{CordGuardTableMetadata.AI_RESPONSES_NAME}:{analysis_id}')
+        logging.info(f'AI response retrieved for analysis ID: {analysis_id}')
         openai_response = OpenAIResponse.from_dict(record['ai_response']) if record else None
         return openai_response if record else None

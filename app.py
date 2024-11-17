@@ -49,6 +49,8 @@ from pydantic import BaseModel
 from fastapi import HTTPException, Request
 from cordguard_utils import is_sub_host
 import os
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -61,6 +63,31 @@ app = FastAPI(
     version="1.0.0"
 )
 
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """
+    Handle HTTP exceptions and log request details
+    """
+    logger.error(f"""
+    404 Error Details:
+    URL: {request.url}
+    Method: {request.method}
+    Headers: {request.headers}
+    Client Host: {request.client.host}
+    Path Params: {request.path_params}
+    Query Params: {request.query_params}
+    """)
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": "Not Found",
+            "message": "The requested resource was not found on this server",
+            "path": str(request.url),
+            "method": request.method
+        }
+    )
+
 @app.get("/ping")
 async def ping(request: Request = None):
     """
@@ -72,8 +99,10 @@ async def ping(request: Request = None):
     logger.info('Ping request received')
     # Extract subdomain from request
     subdomain = request.headers.get('host').split('.')[0]
+    logger.debug(f'Extracted subdomain: {subdomain}')
     try:
         await CordGuardDatabase.test_connection()
+        logger.info('Database connection successful')
     except Exception as e:
         logger.error(f'Database connection failed: {e}')
         return {"status": "pong", "subdomain": subdomain, "database_works": False}
@@ -89,18 +118,24 @@ async def join_waitlist(request: WaitlistEntry, full_request: Request = None):
     """
     Join the waitlist for a feature
     """
+    logger.info(f'Join waitlist request received for feature: {request.feature} from email: {request.email}')
+    
     if not is_sub_host(full_request, os.getenv('GENERIC_HOST', 'generic.')):
+        logger.warning('Access denied: Generic API only allowed through generic subdomain')
         raise HTTPException(status_code=403, detail="Generic API only allowed through generic subdomain")
     
     if full_request.headers.get('x-api-key') != os.getenv('GENERIC_API_KEY'):
+        logger.warning('Access denied: Invalid Generic API key')
         raise HTTPException(status_code=403, detail="Invalid Generic API key")
     
     db: CordGuardDatabase = await CordGuardDatabase.create()
     record = await db.create_waitlist_entry(request.feature, request.email)
+    logger.info(f'Waitlist entry created: {record}')
     return {"success": record}
 
 if __name__ == '__main__':
     # Initialize application with routers
+    logger.info('Initializing application with routers')
     init_fastapi_app(app, [
         analysis_api_endpoint_router,
         ds_api_endpoint_router,
@@ -113,6 +148,8 @@ if __name__ == '__main__':
 
     PORT = os.getenv('PORT')
     if not PORT:
+        logger.error("PORT environment variable is not set")
         raise ValueError("PORT environment variable is not set")
+    logger.info(f'Starting FastAPI server on port {PORT}')
     # Start FastAPI server
     uvicorn.run(app, host='0.0.0.0', port=PORT)

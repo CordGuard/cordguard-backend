@@ -78,7 +78,8 @@ def create_trackable_id(timestamp: int = int(datetime.now().timestamp())) -> str
         >>> create_trackable_id(1633027200)
         'cordguard_a1b2c3d4e590123456_5f3e2d1c'
     """
-    encoded_timestamp = hex(timestamp - TIMESTAMP_HARDCODED_OFFSET)[2:] # Remove the '0x' prefix
+    logging.info(f'Starting ID creation for timestamp: {timestamp}')
+    encoded_timestamp = hex(timestamp - TIMESTAMP_HARDCODED_OFFSET)[2:]  # Remove the '0x' prefix
     logging.info(f'Encoded timestamp: {encoded_timestamp}')
     hashed_timestamp = hashlib.sha256(encoded_timestamp.encode('utf-8')).hexdigest()[:10]
     logging.info(f'Hashed timestamp: {hashed_timestamp}')
@@ -111,8 +112,10 @@ def extract_timestamp_from_trackable_id(trackable_id: str) -> datetime:
         >>> extract_timestamp_from_trackable_id('cordguard_a1b2c3d4e590123456_5f3e2d1c')
         datetime(2021, 10, 1, 0, 0, 0)
     """
+    logging.info(f'Extracting timestamp from trackable ID: {trackable_id}')
     trackable_id_parts = trackable_id.split('_')
     if len(trackable_id_parts) != 3:
+        logging.error("Invalid trackable ID format")
         raise ValueError("Invalid trackable ID format")
     
     timestamp_hex = trackable_id_parts[2]
@@ -120,4 +123,6 @@ def extract_timestamp_from_trackable_id(trackable_id: str) -> datetime:
     # Convert hex directly to integer
     timestamp_int = int(timestamp_hex, 16)
     logging.info(f'Timestamp int: {timestamp_int}')
-    return datetime.fromtimestamp(timestamp_int + TIMESTAMP_HARDCODED_OFFSET)
+    result_datetime = datetime.fromtimestamp(timestamp_int + TIMESTAMP_HARDCODED_OFFSET)
+    logging.info(f'Converted datetime: {result_datetime}')
+    return result_datetime

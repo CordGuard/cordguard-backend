@@ -68,14 +68,18 @@ def safe_read_file(file, max_size=25 * 1024 * 1024) -> bytes | None:
     """
     content = bytearray()
     chunk_size = int(max_size * 0.2)  # 20% of the max size
+    logging.info('Starting to read file in chunks.')
     while True:
         chunk = file.read(chunk_size)
         if not chunk:
+            logging.info('Finished reading file.')
             break
         content.extend(chunk)
+        logging.debug(f'Read chunk of size: {len(chunk)} bytes.')
         if len(content) > max_size:
             logging.error('File too large uploaded')
             return None
+    logging.info('File read successfully, total size: %d bytes.', len(content))
     return bytes(content)
 
 
@@ -101,7 +105,9 @@ def safe_filename(filename):
         >>> safe_filename("my file.txt")
         'my_file.txt'
     """
-    return secure_filename(filename)
+    sanitized_name = secure_filename(filename)
+    logging.info('Sanitized filename: %s', sanitized_name)
+    return sanitized_name
 
 
 def extract_file_extension(filename):
@@ -125,17 +131,25 @@ def extract_file_extension(filename):
     """
     parts = filename.split('.', 1)
     if len(parts) > 1:
+        logging.info('Extracted file extension: %s', parts[1])
         return '.' + parts[1]
+    logging.error('No file extension found for filename: %s', filename)
     raise ValueError('No file extension found')
 
 def does_file_have_extension(filename):
-    return '.' in filename
+    has_extension = '.' in filename
+    logging.debug('File %s has extension: %s', filename, has_extension)
+    return has_extension
 
 def is_sub_host(request: Request, sub_host: str = '') -> bool:
     host = request.headers.get('host', '')
     if not host:
+        logging.warning('No host found in request headers.')
         return False
     if sub_host == '':
+        logging.warning('No sub_host provided for comparison.')
         return False
     
-    return host.startswith(sub_host)
+    result = host.startswith(sub_host)
+    logging.debug('Host %s starts with sub_host %s: %s', host, sub_host, result)
+    return result

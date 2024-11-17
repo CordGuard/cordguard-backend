@@ -44,11 +44,14 @@ def init_fastapi_app(app: FastAPI, routers: list[APIRouter]):
     Returns:
         FastAPI: Configured FastAPI application instance
     """
+    logger.info("Initializing FastAPI application with routers.")
     
     # Include routers
     for router in routers:
         app.include_router(router)
+        logger.info(f"Router {router.prefix} included in the application.")
     
+    logger.info("FastAPI application initialized successfully.")
     return app
 
 # async def analyze_file(cordguard_db: CordGuardDatabase, file: CordGuardAnalysisFile):

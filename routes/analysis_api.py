@@ -42,13 +42,18 @@ async def status(analysis_id: str, request: Request = None):
     Returns:
         dict: Analysis status information
     """
+    logging.info(f"Received status request for analysis_id: {analysis_id}")
     db: CordGuardDatabase = await CordGuardDatabase.create()
     if not is_sub_host(request, os.getenv('ANALYSIS_HOST', 'analysis.')):
+        logging.warning("Unauthorized access attempt for analysis_id: %s", analysis_id)
         raise HTTPException(status_code=403, detail="Analysis API only allowed through API subdomain")
     
     analysis_record = await db.get_analysis_record_by_analysis_id(analysis_id)
     if analysis_record is None:
+        logging.error("Analysis record not found for analysis_id: %s", analysis_id)
         raise HTTPException(status_code=404, detail="Analysis record not found")
+    
+    logging.info("Found analysis record for analysis_id: %s with status: %s", analysis_id, analysis_record.status)
     
     # If it's still pending, return that
     if analysis_record.status == CordGuardAnalysisStatus.PENDING:
@@ -58,23 +63,28 @@ async def status(analysis_id: str, request: Request = None):
             "status": analysis_record.status
         }
     elif analysis_record.status == CordGuardAnalysisStatus.FAILED:
+        logging.warning("Analysis failed for analysis_id: %s", analysis_id)
         return {
             "message": "Analysis failed, request the operator to check the file please.\nGive them the following analysis_id: " + analysis_id,
             "analysis_id": analysis_id,
             "status": analysis_record.status
         }
     elif analysis_record.status == CordGuardAnalysisStatus.COMPLETED:
+        logging.info("Analysis completed for analysis_id: %s", analysis_id)
         # Get results from database and form it correctly
         results = await db.get_analysis_results_by_analysis_id(analysis_id)
         if results is None:
+            logging.error("Analysis results not found for analysis_id: %s", analysis_id)
             raise HTTPException(status_code=500, detail="Analysis results not found. Internal error.")
         # File data
         file_record = await db.get_file_record_by_file_hash(analysis_record.file_hash)
         if file_record is None:
+            logging.error("File record not found for file_hash: %s", analysis_record.file_hash)
             raise HTTPException(status_code=500, detail="File record not found. Internal error.")
         # AI response
         ai_response_record = await db.get_ai_response_by_analysis_id(analysis_id)
         if ai_response_record is None:
+            logging.error("AI response not found for analysis_id: %s", analysis_id)
             raise HTTPException(status_code=500, detail="AI response not found. Internal error.")
         return {
             "message": "Analysis successful",
@@ -85,6 +95,7 @@ async def status(analysis_id: str, request: Request = None):
             "ai_response": ai_response_record.get_dict()
         }
     else:
+        logging.error("Unknown analysis status for analysis_id: %s", analysis_id)
         raise HTTPException(status_code=500, detail="Unknown analysis status")
 
 @analysis_api_endpoint_router.post("/upload")
@@ -106,15 +117,17 @@ async def upload(file: UploadFile = File(...), request: Request = None):
             400: Invalid file type or size
             500: Server error (S3 upload failed)
     """
-    logging.info('File upload request received')
+    logging.info('File upload request received for file: %s', file.filename)
 
     if not is_sub_host(request, os.getenv('API_HOST', 'api.')):
+        logging.warning("Unauthorized file upload attempt from host: %s", request.client.host)
         raise HTTPException(
             status_code=403, 
             detail="File upload only allowed through analysis subdomain"
         )
     
     if request.headers.get('x-api-key') != os.getenv('ANALYSIS_API_KEY'):
+        logging.warning("Invalid API key provided for file upload")
         raise HTTPException(status_code=403, detail="Invalid Analysis API key")
     
     # Define accepted file extensions
@@ -134,27 +147,31 @@ async def upload(file: UploadFile = File(...), request: Request = None):
     
     # Validate file extension
     if not file.filename.endswith(tuple(list_of_accepted_file_types)):
-        logging.error('Invalid file type uploaded')
+        logging.error('Invalid file type uploaded: %s', file.filename)
         raise HTTPException(status_code=400, detail="Invalid file type")
     
     # Sanitize filename
     filename = safe_filename(file.filename)
+    logging.info('Sanitized filename: %s', filename)
 
     if not does_file_have_extension(filename):
-        logging.error('File has no extension, we are unable to process this file.')
+        logging.error('File has no extension, we are unable to process this file: %s', filename)
         raise HTTPException(status_code=400, detail="File has no extension, we are unable to process this file.")
 
     # Read and validate file content
     content = safe_read_file(file.file)
     if content is None:
+        logging.error('File too large or empty for file: %s', filename)
         raise HTTPException(status_code=400, detail="File too large or empty")
     
     # Create analysis file object
     magic_result = puremagic.magic_stream(file.file, filename)[0]
     mime_type = magic_result.mime_type
+    logging.info('Detected MIME type: %s for file: %s', mime_type, filename)
 
     # if it's ELF, we need to reject it
     if mime_type == "application/x-executable":
+        logging.error('ELF files are not supported: %s', filename)
         raise HTTPException(status_code=400, detail="ELF files are not supported yet.")
 
     file_obj = CordGuardAnalysisFile(filename, mime_type, len(content), content, bucket_name_s3=BUCKET_NAME_S3, s3_client=None)
@@ -163,6 +180,7 @@ async def upload(file: UploadFile = File(...), request: Request = None):
     db: CordGuardDatabase = await CordGuardDatabase.create()
     file_record = await db.get_file_record_by_file_hash(file_obj.file_hash)
     if file_record is not None:
+        logging.info('File already in database with analysis_id: %s', file_record.analysis_id)
         return {
             "message": "File already in database",
             "analysis_id": file_record.analysis_id
@@ -170,6 +188,7 @@ async def upload(file: UploadFile = File(...), request: Request = None):
     
     # Upload to S3
     if not file_obj.upload_to_s3():
+        logging.error('Failed to upload file to S3: %s', filename)
         raise HTTPException(status_code=500, detail="Failed to upload file")
 
     logging.info(f'File uploaded with analysis_id: {file_obj.analysis_id} and file_id: {file_obj.file_id}')
@@ -177,9 +196,10 @@ async def upload(file: UploadFile = File(...), request: Request = None):
     # Create DATABASE record
     record = await db.new_analysis_for_file(file_obj)
     if record is None:
-        # Delete the file from S3 or find a way to get it back or something
+        logging.error('Failed to create analysis record for file: %s', filename)
         raise HTTPException(status_code=500, detail="Failed to create analysis record")
 
+    logging.info('File uploaded and queued for analysis with analysis_id: %s', file_obj.analysis_id)
     return {
         "message": "File uploaded and queued for analysis",
         "analysis_id": file_obj.analysis_id

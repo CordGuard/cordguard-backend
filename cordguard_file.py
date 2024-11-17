@@ -97,9 +97,12 @@ class CordGuardAnalysisFile:
             s3_client: Boto3 S3 client instance
             bucket_name_s3 (str): Name of the S3 bucket
         """
+        logging.info(f'Initializing CordGuardAnalysisFile with file_name: {file_name}, file_type: {file_type}, file_size: {file_size}')
         self.current_timestamp = int(time.time())
         self.analysis_id = create_trackable_id(self.current_timestamp)
+        logging.info(f'Generated analysis_id: {self.analysis_id}')
         self.file_id = secrets.token_hex(16)
+        logging.info(f'Generated file_id: {self.file_id}')
         self.file_name: str = file_name
         self.file_extension: str = extract_file_extension(file_name)
         self.file_type: str = file_type
@@ -121,10 +124,13 @@ class CordGuardAnalysisFile:
             endpoint_url=AWS_CONFIG['endpoint_url'],
             region_name=AWS_CONFIG['region']
             )
+            logging.info('Initialized new S3 client with provided AWS configuration.')
         else:
             self.s3_client = s3_client
+            logging.info('Using provided S3 client instance.')
         self.bucket_name_s3 = bucket_name_s3
         self.file_hash: str = hashlib.sha256(file_content).hexdigest()
+        logging.info(f'Calculated file hash: {self.file_hash}')
 
     # @staticmethod
     # def from_dict(data: dict) -> 'CordGuardAnalysisFile':
@@ -145,6 +151,7 @@ class CordGuardAnalysisFile:
         Returns:
             dict: Dictionary containing file metadata
         """
+        logging.info(f'Converting file object to dictionary for file_id: {self.file_id}')
         return {
             'analysis_id': self.analysis_id,
             'file_id': self.file_id,
@@ -167,12 +174,12 @@ class CordGuardAnalysisFile:
             bool: True if upload successful, False otherwise
         """
         if self.file_content is None or self.file_size == 0 or self.file_type is None or self.s3_client is None or self.bucket_name_s3 is None:
-            logging.error(f'{self.file_id} File content is None')
+            logging.error(f'{self.file_id} File content is None or invalid parameters')
             return False
         logging.info(f'Uploading {self.file_id} to S3 at key: {self.get_s3_key()} in bucket: {self.bucket_name_s3}')
         try:
             self.s3_client.put_object(Bucket=self.bucket_name_s3, Key=self.get_s3_key(), Body=self.file_content)
-            logging.info(f'{self.file_id} uploaded to S3')
+            logging.info(f'{self.file_id} uploaded to S3 successfully')
         except Exception as e:
             logging.error(f'Error uploading {self.file_id} to S3: {e}')
             return False
@@ -182,18 +189,21 @@ class CordGuardAnalysisFile:
         """
         Get the file content.
         """
+        logging.info(f'Getting content for file_id: {self.file_id}')
         return self.file_content
     
     def get_analysis_id(self):
         """
         Get the analysis ID.
         """
+        logging.info(f'Getting analysis ID for file_id: {self.file_id}')
         return self.analysis_id
     
     def get_file_id(self):
         """
         Get the file ID.
         """
+        logging.info(f'Getting file ID for file_id: {self.file_id}')
         return self.file_id
 
     def get_s3_key(self):
@@ -209,10 +219,14 @@ class CordGuardAnalysisFile:
         year_month = date_time.strftime('%Y-%m')
         day_number = date_time.strftime('%d')
         day_name = date_time.strftime('%A')
-        return f'analysis/{year_month}/{day_number}_{day_name}/{self.analysis_id}-{self.file_id}/{self.file_name}'
+        s3_key = f'analysis/{year_month}/{day_number}_{day_name}/{self.analysis_id}-{self.file_id}/{self.file_name}'
+        logging.info(f'Generated S3 key: {s3_key} for file_id: {self.file_id}')
+        return s3_key
     
     def get_full_url_to_file(self):
         """
         Get the full URL to the file in S3.
         """
-        return f'{self.s3_client.meta.endpoint_url}/{self.bucket_name_s3}/{self.get_s3_key()}'
+        full_url = f'{self.s3_client.meta.endpoint_url}/{self.bucket_name_s3}/{self.get_s3_key()}'
+        logging.info(f'Generated full URL to file: {full_url}')
+        return full_url

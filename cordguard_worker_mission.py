@@ -21,6 +21,7 @@ Security Contact: CordGuard Security Team <security@cordguard.org>
 Maintained by: Abjad Tech Platform <hello@abjad.cc>
 Version: 1.0.0
 """
+import logging
 from cordguard_worker import CordguardWorker
 from cordguard_file import CordGuardAnalysisFile 
 
@@ -32,6 +33,10 @@ class CordGuardAnalysisRecord:
     pass
 class CordGuardFileRecord:
     pass
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class CordguardWorkerMission:
     """
@@ -54,6 +59,7 @@ class CordguardWorkerMission:
         self.worker = worker
         self.analysis = analysis
         self.file = file
+        logger.info(f'Initialized CordguardWorkerMission with mission_id: {self.mission_id}')
 
     def __str__(self) -> str:
         return f'CordguardWorkerMission(mission_id={self.mission_id}, worker={self.worker}, analysis={self.analysis})'
@@ -77,12 +83,14 @@ class CordguardWorkerMission:
             >>> print(mission_dict['mission_id'])
             'mission_abc123'
         """
-        return {
+        mission_dict = {
             'mission_id': self.mission_id,
             'worker': self.worker.get_dict(),
             'analysis': self.analysis.get_dict(),
             'file': self.file.get_dict()
         }
+        logger.info(f'Converted mission to dictionary: {mission_dict}')
+        return mission_dict
 
     def get_mission_response(self):
         """
@@ -99,9 +107,10 @@ class CordguardWorkerMission:
             >>> print(response['file_full_url'])
             'https://storage.cordguard.com/files/abc123.exe'
         """
-        return {
+        response = {
                 'mission_id': self.mission_id,
                 'file_full_url': self.file.file_full_url,
                 'analysis_id': self.analysis.analysis_id
             }
-     
+        logger.info(f'Generated mission response: {response}')
+        return response

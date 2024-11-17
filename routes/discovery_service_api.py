@@ -76,16 +76,18 @@ async def register_vm_worker(registration: WorkerRegistration, request: Request)
         >>> }
         >>> Returns: {"status": "success", "message": "VM worker registered successfully"}
     """
-    logging.info('Register VM worker request received')
+    logging.info('Register VM worker request received with data: %s', registration.dict())
     
     try:
         if not is_sub_host(request, os.getenv('REGISTRY_HOST', 'registry.')):
+            logging.warning("Unauthorized access attempt for worker registration from host: %s", request.client.host)
             raise HTTPException(
                 status_code=403, 
                 detail="Worker registration only allowed through registry subdomain"
             )
 
         if request.headers.get('x-api-key') != os.getenv('REGISTRY_API_KEY'):
+            logging.warning("Invalid Registry API key provided")
             raise HTTPException(status_code=403, detail="Invalid Registry API key")
 
         # Create worker instance with initial unsigned status
@@ -96,6 +98,7 @@ async def register_vm_worker(registration: WorkerRegistration, request: Request)
             is_signed=False,
             status=CordguardWorkerStatus.NOT_ACQUIRED
         )
+        logging.info('Created worker instance: %s', worker.get_dict())
         db: CordGuardDatabase = await CordGuardDatabase.create()
 
         # Verify worker signature
@@ -104,27 +107,28 @@ async def register_vm_worker(registration: WorkerRegistration, request: Request)
         signed_hwid_bytes = bytes.fromhex(worker.signed_hwid)
         
         if not auth.verify(hwid_bytes, signed_hwid_bytes):
+            logging.error("Signature verification failed for worker: %s", worker.hwid)
             raise HTTPException(status_code=400, detail="VM worker is not signed")
         
         # Mark as signed and register
         worker.is_signed = True
+        logging.info('Worker marked as signed: %s', worker.get_dict())
 
         """
         Check if worker exists and register if new.
         Returns existing or newly registered worker.
         """
         logging.info(f'Checking if worker exists: {worker.signed_hwid}')
-        db = await CordGuardDatabase.create()
         existing_worker = await db.get_worker_by_signed_hwid(worker.signed_hwid)
         if existing_worker is not None:
+            logging.info("Worker already registered: %s", existing_worker.get_dict())
             return {"status": "success", "message": "VM worker already registered"}
         
         logging.info(f'Registering worker: {worker.get_dict()}')
-
         worker = await db.register_vm_worker(worker)
 
         if worker:
-            logging.info(f'Worker registered: {worker.get_dict()}')
+            logging.info(f'Worker registered successfully: {worker.get_dict()}')
             return {"status": "success", "message": "VM worker registered successfully"}
         
         logging.error(f'Worker registration failed: {worker.get_dict()}')
