@@ -136,7 +136,7 @@ async def join_waitlist(request: WaitlistEntry, full_request: Request = None):
 if __name__ == '__main__':
     # Initialize application with routers
     logger.info('Initializing application with routers')
-    init_fastapi_app(app, [
+    app =init_fastapi_app(app, [
         analysis_api_endpoint_router,
         ds_api_endpoint_router,
         mission_api_endpoint_router
