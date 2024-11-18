@@ -71,7 +71,6 @@ app = init_fastapi_app(app, [
         mission_api_endpoint_router
 ])
     
-
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """
@@ -91,9 +90,9 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": "Not Found",
-            "message": "The requested resource was not found on this server",
+        content=exc.detail if isinstance(exc.detail, dict) else {
+            "error": exc.detail if exc.detail else "Not Found",
+            "message": str(exc.detail) if exc.detail else "",
             "path": str(request.url),
             "method": request.method
         }
