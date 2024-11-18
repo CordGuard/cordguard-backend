@@ -168,13 +168,16 @@ async def upload(file: UploadFile = File(...), request: Request = None):
         logging.error('File too large or empty: %s', filename)
         raise HTTPException(status_code=400, detail="File too large or empty")
     
-    logging.info('File read successfully, total size: %d bytes.', len(content))
+    # TODO: This is a workaround to avoid the file being read multiple times
+    import io
+    byteio_file = io.BytesIO(content)
     # Create analysis file object
-    magic_result = puremagic.magic_stream(file.file, filename)[0]
+    magic_result = puremagic.magic_stream(byteio_file, filename)[0]
     mime_type = magic_result.mime_type
     logging.info('Detected MIME type: %s for file: %s', mime_type, filename)
 
-    # if it's ELF, we need to reject it
+    # if it's ELF, we need to reject it for now
+    # TODO: Support ELF files in the future
     if mime_type == "application/x-executable":
         logging.error('ELF files are not supported: %s', filename)
         raise HTTPException(status_code=400, detail="ELF files are not supported yet.")
