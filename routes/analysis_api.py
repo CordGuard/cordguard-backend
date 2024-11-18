@@ -168,6 +168,7 @@ async def upload(file: UploadFile = File(...), request: Request = None):
         logging.error('File too large or empty: %s', filename)
         raise HTTPException(status_code=400, detail="File too large or empty")
     
+    logging.info('File read successfully, total size: %d bytes.', len(content))
     # Create analysis file object
     magic_result = puremagic.magic_stream(file.file, filename)[0]
     mime_type = magic_result.mime_type
