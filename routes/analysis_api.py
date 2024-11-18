@@ -18,7 +18,6 @@ Version: 1.0.0
 """
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
 import logging
 from cordguard_globals import BUCKET_NAME_S3
 from cordguard_utils import safe_read_file, safe_filename, does_file_have_extension
@@ -32,14 +31,6 @@ logging.basicConfig(level=logging.INFO)
 
 analysis_api_endpoint_router = APIRouter(prefix="/analysis/api", tags=["analysis"])
 
-# Add CORS middleware
-analysis_api_endpoint_router.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["POST"],
-    allow_headers=["*"],
-)
 @analysis_api_endpoint_router.get("/status/{analysis_id}")
 async def status(analysis_id: str, request: Request = None):
     """

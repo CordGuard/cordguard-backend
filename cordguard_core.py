@@ -24,6 +24,7 @@ Version: 1.0.0
 
 import logging
 from fastapi import FastAPI, APIRouter
+
 # from cordguard_analysis import static_analysis !Deprecated
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ def init_fastapi_app(app: FastAPI, routers: list[APIRouter]):
         FastAPI: Configured FastAPI application instance
     """
     logger.info("Initializing FastAPI application with routers.")
-    
+
     # Include routers
     for router in routers:
         logger.info(f"Including router {router.prefix} with routes:")

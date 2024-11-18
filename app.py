@@ -51,7 +51,7 @@ from cordguard_utils import is_sub_host
 import os
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-
+from fastapi.middleware.cors import CORSMiddleware
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -61,6 +61,15 @@ app = FastAPI(
     title="CordGuard API",
     description="CordGuard malware analysis REST API",
     version="1.0.0"
+)
+    
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://cordguard.org", "https://www.cordguard.org", "http://localhost", "http://localhost:8000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize application with routers
