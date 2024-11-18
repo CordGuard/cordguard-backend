@@ -22,7 +22,6 @@ file.txt
 *.whl
 *.egg
 .vscode
-*.pem
 *.key
 *.crt
 *.cer
