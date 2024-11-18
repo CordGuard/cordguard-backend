@@ -165,7 +165,7 @@ async def upload(file: UploadFile = File(...), request: Request = None):
     # Read and validate file content
     content = safe_read_file(file.file)
     if content is None:
-        logging.error('File too large or empty for file: %s', filename)
+        logging.error('File too large or empty: %s', filename)
         raise HTTPException(status_code=400, detail="File too large or empty")
     
     # Create analysis file object
