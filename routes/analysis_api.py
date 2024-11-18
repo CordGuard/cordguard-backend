@@ -18,6 +18,7 @@ Version: 1.0.0
 """
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 import logging
 from cordguard_globals import BUCKET_NAME_S3
 from cordguard_utils import safe_read_file, safe_filename, does_file_have_extension
@@ -31,6 +32,14 @@ logging.basicConfig(level=logging.INFO)
 
 analysis_api_endpoint_router = APIRouter(prefix="/analysis/api", tags=["analysis"])
 
+# Add CORS middleware
+analysis_api_endpoint_router.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["POST"],
+    allow_headers=["*"],
+)
 @analysis_api_endpoint_router.get("/status/{analysis_id}")
 async def status(analysis_id: str, request: Request = None):
     """
@@ -117,18 +126,22 @@ async def upload(file: UploadFile = File(...), request: Request = None):
             400: Invalid file type or size
             500: Server error (S3 upload failed)
     """
+
+    # PUBLIC ENDPOINT FOR NOW.
     logging.info('File upload request received for file: %s', file.filename)
 
-    if not is_sub_host(request, os.getenv('API_HOST', 'api.')):
+    # 'u.' subdomain because it's public.
+    if not is_sub_host(request, os.getenv('USERS_HOST', 'u.')):
         logging.warning("Unauthorized file upload attempt from host: %s", request.client.host)
         raise HTTPException(
             status_code=403, 
             detail="File upload only allowed through analysis subdomain"
         )
     
-    if request.headers.get('x-api-key') != os.getenv('ANALYSIS_API_KEY'):
-        logging.warning("Invalid API key provided for file upload")
-        raise HTTPException(status_code=403, detail="Invalid Analysis API key")
+    # No need for API key for now because it's public.
+    # if request.headers.get('x-api-key') != os.getenv('ANALYSIS_API_KEY'):
+    #     logging.warning("Invalid API key provided for file upload")
+    #     raise HTTPException(status_code=403, detail="Invalid Analysis API key")
     
     # Define accepted file extensions
     list_of_accepted_file_types = [
