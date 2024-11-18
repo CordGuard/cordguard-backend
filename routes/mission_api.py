@@ -99,11 +99,11 @@ async def get_mission(mission_request: MissionGetRequest, request: Request = Non
     
     # Verify worker signature
     auth = CordguardAuth()
-    hwid_bytes = worker.hwid.encode('utf-8')
-    signed_hwid_bytes = bytes.fromhex(worker.signed_hwid)
+    hwid_bytes = mission_request.hwid.encode('utf-8')
+    signed_hwid_bytes = bytes.fromhex(mission_request.signed_hwid)
     
     if not auth.verify(hwid_bytes, signed_hwid_bytes):
-        logging.error("VM worker signature verification failed for signed_hwid: %s", mission_request.signed_hwid)
+        logging.error("Signature verification failed for worker: %s", mission_request.hwid)
         raise HTTPException(status_code=400, detail="VM worker is not signed")
     
     worker.is_signed = True
