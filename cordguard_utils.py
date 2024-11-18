@@ -69,17 +69,22 @@ def safe_read_file(file, max_size=25 * 1024 * 1024) -> bytes | None:
     content = bytearray()
     chunk_size = int(max_size * 0.2)  # 20% of the max size
     logging.info('Starting to read file in chunks.')
+    size = 0
     while True:
         chunk = file.read(chunk_size)
         if not chunk:
+            if size == 0:
+                logging.error('File is empty')
+                return None
             logging.info('Finished reading file.')
             break
         content.extend(chunk)
         logging.debug(f'Read chunk of size: {len(chunk)} bytes.')
-        if len(content) > max_size:
+        size += len(chunk)
+        if size > max_size:
             logging.error('File too large uploaded')
             return None
-    logging.info('File read successfully, total size: %d bytes.', len(content))
+    logging.info('File read successfully, total size: %d bytes.', size)
     return bytes(content)
 
 
