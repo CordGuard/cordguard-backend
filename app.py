@@ -52,6 +52,7 @@ import os
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from routes.ai_api import ai_api_endpoint_router
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -77,7 +78,8 @@ logger.info('Initializing application with routers')
 app = init_fastapi_app(app, [
     analysis_api_endpoint_router,
         ds_api_endpoint_router,
-        mission_api_endpoint_router
+        mission_api_endpoint_router,
+        ai_api_endpoint_router
 ])
     
 @app.exception_handler(StarletteHTTPException)
@@ -152,6 +154,8 @@ async def join_waitlist(request: WaitlistEntry, full_request: Request = None):
     logger.info(f'Waitlist entry created: {record}')
     return {"success": record}
 
+
+# If run with python app.py, start the server
 if __name__ == '__main__':
  
     # Start background consumer thread
@@ -164,4 +168,4 @@ if __name__ == '__main__':
         raise ValueError("PORT environment variable is not set")
     logger.info(f'Starting FastAPI server on port {PORT}')
     # Start FastAPI server
-    uvicorn.run(app, host='0.0.0.0', port=PORT)
+    uvicorn.run("app:app", host='0.0.0.0', port=PORT)
