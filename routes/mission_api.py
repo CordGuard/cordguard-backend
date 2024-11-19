@@ -74,13 +74,17 @@ async def get_mission(mission_request: MissionGetRequest, request: Request = Non
     """
     logging.info(f'Get mission request received: {mission_request.signed_hwid}')
     db: CordGuardDatabase = await CordGuardDatabase.create()
-    if not is_sub_host(request, os.getenv('WORKER_HOST', 'workers.')):
-        logging.warning("Unauthorized access attempt from host: %s", request.client.host)
-        raise HTTPException(status_code=403, detail="Worker API only allowed through workers subdomain")
+
+    if os.getenv('DEBUG') == 'true':
+        logging.info('DEBUG is true, skipping host check')
+    else:
+        if not is_sub_host(request, os.getenv('WORKER_HOST', 'workers.')):
+            logging.warning("Unauthorized access attempt from host: %s", request.client.host)
+            raise HTTPException(status_code=403, detail="Worker API only allowed through workers subdomain")
     
-    if request.headers.get('x-api-key') != os.getenv('WORKER_API_KEY'):
-        logging.warning("Invalid Worker API key provided.")
-        raise HTTPException(status_code=403, detail="Invalid Worker API key")
+        if request.headers.get('x-api-key') != os.getenv('WORKER_API_KEY'):
+            logging.warning("Invalid Worker API key provided.")
+            raise HTTPException(status_code=403, detail="Invalid Worker API key")
     
     worker = await db.get_worker_by_signed_hwid(mission_request.signed_hwid)
     if worker is None:
@@ -179,13 +183,16 @@ async def set_result(result: CordguardResult, request: Request = None):
     """
     logging.info('Set result request received for analysis_id: %s', result.analysis_id)
     
-    if not is_sub_host(request, os.getenv('WORKER_HOST', 'workers.')):
-        logging.warning("Unauthorized access attempt from host: %s", request.client.host)
-        raise HTTPException(status_code=403, detail="Worker API only allowed through workers subdomain")
+    if os.getenv('DEBUG') == 'true':
+        logging.info('DEBUG is true, skipping host check')
+    else:
+        if not is_sub_host(request, os.getenv('WORKER_HOST', 'workers.')):
+            logging.warning("Unauthorized access attempt from host: %s", request.client.host)
+            raise HTTPException(status_code=403, detail="Worker API only allowed through workers subdomain")
     
-    if request.headers.get('x-api-key') != os.getenv('WORKER_API_KEY'):
-        logging.warning("Invalid Worker API key provided.")
-        raise HTTPException(status_code=403, detail="Invalid Worker API key")
+        if request.headers.get('x-api-key') != os.getenv('WORKER_API_KEY'):
+            logging.warning("Invalid Worker API key provided.")
+            raise HTTPException(status_code=403, detail="Invalid Worker API key")
     
     # Set result in database
     db: CordGuardDatabase = await CordGuardDatabase.create()

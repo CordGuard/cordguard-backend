@@ -79,16 +79,19 @@ async def register_vm_worker(registration: WorkerRegistration, request: Request)
     logging.info('Register VM worker request received with data: %s', registration.dict())
     
     try:
-        if not is_sub_host(request, os.getenv('REGISTRY_HOST', 'registry.')):
-            logging.warning("Unauthorized access attempt for worker registration from host: %s", request.client.host)
-            raise HTTPException(
-                status_code=403, 
-                detail="Worker registration only allowed through registry subdomain"
+        if os.getenv('DEBUG') == 'true':
+            logging.info('DEBUG is true, skipping host check')
+        else:
+            if not is_sub_host(request, os.getenv('REGISTRY_HOST', 'registry.')):
+                logging.warning("Unauthorized access attempt for worker registration from host: %s", request.client.host)
+                raise HTTPException(
+                    status_code=403, 
+                    detail="Worker registration only allowed through registry subdomain"
             )
 
-        if request.headers.get('x-api-key') != os.getenv('REGISTRY_API_KEY'):
-            logging.warning("Invalid Registry API key provided")
-            raise HTTPException(status_code=403, detail="Invalid Registry API key")
+            if request.headers.get('x-api-key') != os.getenv('REGISTRY_API_KEY'):
+                logging.warning("Invalid Registry API key provided")
+                raise HTTPException(status_code=403, detail="Invalid Registry API key")
 
         # Create worker instance with initial unsigned status
         worker = CordguardWorker(

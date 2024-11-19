@@ -44,10 +44,18 @@ async def status(analysis_id: str, request: Request = None):
     """
     logging.info(f"Received status request for analysis_id: {analysis_id}")
     db: CordGuardDatabase = await CordGuardDatabase.create()
-    if not is_sub_host(request, os.getenv('ANALYSIS_HOST', 'analysis.')):
-        logging.warning("Unauthorized access attempt for analysis_id: %s", analysis_id)
-        raise HTTPException(status_code=403, detail="Analysis API only allowed through API subdomain")
-    
+
+    if os.getenv('DEBUG') == 'true':
+        logging.info('DEBUG is true, skipping host check')
+    else:
+        if not is_sub_host(request, os.getenv('ANALYSIS_HOST', 'analysis.')):
+            logging.warning("Unauthorized access attempt for analysis_id: %s", analysis_id)
+            raise HTTPException(status_code=403, detail="Analysis API only allowed through API subdomain")
+        
+        if request.headers.get('x-api-key') != os.getenv('ANALYSIS_API_KEY'):
+            logging.warning("Invalid API key provided for analysis_id: %s", analysis_id)
+            raise HTTPException(status_code=403, detail="Invalid Analysis API key")
+
     analysis_record = await db.get_analysis_record_by_analysis_id(analysis_id)
     if analysis_record is None:
         logging.error("Analysis record not found for analysis_id: %s", analysis_id)
@@ -121,13 +129,16 @@ async def upload(file: UploadFile = File(...), request: Request = None):
     # PUBLIC ENDPOINT FOR NOW.
     logging.info('File upload request received for file: %s', file.filename)
 
-    # 'u.' subdomain because it's public.
-    if not is_sub_host(request, os.getenv('USERS_HOST', 'u.')):
-        logging.warning("Unauthorized file upload attempt from host: %s", request.client.host)
-        raise HTTPException(
-            status_code=403, 
-            detail="File upload only allowed through analysis subdomain"
-        )
+    if os.getenv('DEBUG') == 'true':
+        logging.info('DEBUG is true, skipping host check')
+    else:
+        # 'u.' subdomain because it's public.
+        if not is_sub_host(request, os.getenv('USERS_HOST', 'u.')):
+            logging.warning("Unauthorized file upload attempt from host: %s", request.client.host)
+            raise HTTPException(
+                status_code=403, 
+                detail="File upload only allowed through analysis subdomain"
+            )
     
     # No need for API key for now because it's public.
     # if request.headers.get('x-api-key') != os.getenv('ANALYSIS_API_KEY'):
