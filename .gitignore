@@ -36,3 +36,4 @@ cordguard_queue.pickle
 temp/*
 temp/
 test_samples/
+test_*.txt
