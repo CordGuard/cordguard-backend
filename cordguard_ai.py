@@ -94,7 +94,7 @@ class OpenAIMaliciousTextDetector:
         detect: Analyzes text for malicious content using OpenAI API
     """
 
-    def __init__(self, key=None):
+    def __init__(self, model="gpt-4o", auto_model=False, key=None):
         """
         Initialize the detector with OpenAI API credentials.
 
@@ -109,9 +109,29 @@ class OpenAIMaliciousTextDetector:
             if not openai_api_key:
                 raise ValueError("OPENAI_API_KEY is not set")
         self.client = openai.OpenAI()
-        with open("PROMPT", "r") as file:
-            self.prompt = file.read()
+        self.model = model
+        try:
+            with open("PROMPT", "r") as file:
+                content = file.read()
+                if not content.strip():
+                    raise ValueError("PROMPT file is empty")
+                self.prompt = content
+        except FileNotFoundError:
+            raise ValueError("PROMPT file not found")
+        self.auto_model = auto_model
         logging.info("OpenAIMaliciousTextDetector initialized with prompt loaded.")
+    def calculate_token_count(self, text: str) -> int:
+        """
+        Calculate the token count of the text.
+        
+        Args:
+            text (str): The text to analyze
+            
+        Returns:
+            int: Estimated token count
+        """
+        # Rough estimation: ~4 chars per token
+        return len(text) // 4
 
     def detect(self, text: str) -> OpenAIResponse:
         """
@@ -130,8 +150,28 @@ class OpenAIMaliciousTextDetector:
             Uses GPT-4 model and enforces a specific JSON schema for responses
         """
         logging.info("Detecting malicious text...")
+        HARDCODED_MINI_TOKEN_COUNT = 2048
+        HARDCODED_MINI_COST = 0.001
+        HARDCODED_O_COST = 0.01
+        if self.auto_model:
+            # Calculate tokens and costs
+            tokens = self.calculate_token_count(text)
+            
+            # GPT-4o: $0.01/1K tokens, more accurate
+            # GPT-4o-mini: $0.001/1K tokens, less accurate
+            gpt4o_cost = (tokens / HARDCODED_MINI_TOKEN_COUNT) * HARDCODED_O_COST
+            gpt4o_mini_cost = (tokens / HARDCODED_MINI_TOKEN_COUNT) * HARDCODED_MINI_COST
+            
+            # Use mini for larger texts to save costs
+            if tokens > HARDCODED_MINI_TOKEN_COUNT:
+                self.model = "gpt-4o-mini"
+                logging.info(f"Using gpt-4o-mini for {tokens} tokens (cost: ~${gpt4o_mini_cost:.4f})")
+            else:
+                self.model = "gpt-4o" 
+                logging.info(f"Using gpt-4o for {tokens} tokens (cost: ~${gpt4o_cost:.4f})")
+
         completion = self.client.chat.completions.create(
-            model="gpt-4o",
+            model=self.model,
             messages=[
                 {"role": "system", "content": self.prompt},
                 {"role": "user", "content": text}
