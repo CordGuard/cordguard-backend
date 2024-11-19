@@ -181,6 +181,7 @@ class CordGuardFileRecord:
             f"{CordGuardFileRecordFields.file_extension}": self.file_extension,
             f"{CordGuardFileRecordFields.file_size}": self.file_size,
             f"{CordGuardFileRecordFields.file_type}": self.file_type,
+            f"{CordGuardFileRecordFields.analysis_id}": self.analysis_id
         }
 
     def get_safe_dict(self) -> dict:
